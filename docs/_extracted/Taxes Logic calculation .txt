@@ -1,0 +1,605 @@
+1. Calculation Architecture of the Taxes Module
+The module must be designed around 3 engines:
+1. IPP Engine – Individual
+Used for the self-employed individual and for the company director as a natural person.
+2. ISOC Engine – Company
+Used to estimate corporate income tax on net taxable profit.
+3. Bridge Engine – Company ↔ Director
+Used to connect:
+• the director’s remuneration,• dividends,• social contributions possibly paid by the company,• benefits in kind,• and their simultaneous impact on both ISOC and IPP.
+This is exactly the overall logic of the document:
+if Self-employed → IPP + Social Engine;if Company → ISOC Engine, then possibly IPP Director Engine + Bridge Engine.
+Fiscal Profile Questions (Taxes…)
+Core backend structures to plan for
+Before going screen by screen, developers must understand that they need to build a standardized tax object.
+Tax object “Person”
+Main fields:
+• tax_subject_type = self_employed / company_director• marital_status• marital_status_since• partner_income_mode• partner_income_exact• children_count• children[] = {birth_date, disabled_flag}• other_dependents_count• birth_date• municipality_code• municipal_tax_rate• salaried_income_taxable• salary_withholding_tax_known• salary_withholding_tax_amount• self_employed_status• activity_start_date• activity_type• vat_status• vat_regime• estimated_profit_mode• estimated_annual_net_profit• social_contrib_exempt• social_fund• social_contrib_quarterly_amount• advance_payment_preference• other_income_flags• other_income_amounts
+Tax object “Company”
+• fiscal_year_start• fiscal_year_end• corporate_tax_regime_selected• estimated_net_taxable_profit• directors[]
+Object “Director”
+• full_name• role• monthly_gross_salary• expected_dividends• social_contributions_paid_by_company• company_car• personal_profile_linked = true/false
+3. Fundamental rule: calculation order
+For the engine to remain stable, the order must be the following.
+Individual
+Identify the tax and social regime.
+Identify the activity period.
+Estimate net professional income.
+Add other professional or salaried income.
+Determine estimated social contributions.
+Determine net taxable income.
+Apply family parameters.
+Calculate IPP.
+Apply municipal surcharges.
+Deduct withholding taxes and withholdings.
+Deduct or compare advance tax payments.
+Display estimated final balance.
+Company
+Determine the fiscal year.
+Determine net taxable profit.
+Determine the applicable ISOC rate.
+Calculate corporate tax.
+Determine remaining cash.
+Integrate flows to directors.
+Calculate the director’s IPP.
+Consolidate the global view.
+The SPF Finances confirms that corporate income tax is calculated on the company’s net income and that the standard rate is 25%.
+4. PHASE 1 — Tax Subject Confirmation
+Screen 1 — “How are you taxed?”
+Choices:
+• Self-employed (Natural person)• Company
+This question does not calculate anything directly, but it selects the main engine.
+If “Self-employed”
+Activate:
+• engine = IPP_SELF_EMPLOYED• needs_company_engine = false• needs_director_engine = false
+If “Company”
+Activate:
+• engine = ISOC_COMPANY• needs_company_engine = true• needs_director_engine = conditional
+Impact
+This answer determines:
+• the following screens;• the variables to collect;• the tax formulas;• the summary outputs.
+This is the root switch.
+5. PHASE 2 — Self-employed (Natural Person)
+Screen 2 — Self-Employed Status
+Choices:
+• Main self-employed• Complementary self-employed• Article 37• Active pensioner• Student self-employed
+This variable feeds the Social Engine.
+Backend field
+self_employed_status
+Main effects
+It influences:
+• the social contribution regime;• potential minimums / reductions / exemptions;• the regularization logic;• consistency with age and activity type.
+INASTI clearly distinguishes rules depending on main activity, complementary activity, student self-employed, and article 37 assimilation.
+The engine must apply a parameter table:
+social_scheme = social_scheme_by_status[self_employed_status]
+Example logic
+• main_self_employed → normal contribution• complementary → reduced contribution possible depending on income• article_37 → complementary-equivalent regime• student_self_employed → specific regime• active_pensioner → specific regime
+Important dev point
+This answer does not directly change the IPP brackets, but it changes how the social burden is estimated, and therefore indirectly changes:
+• net taxable income,• available cash,• the advance payment recommendation.
+Screen 3 — Start Date of Activity
+Calculation logic
+Field:
+activity_start_date
+Why it is calculation-related
+This date is used to determine:
+• whether the activity covers a full year or a partial year;• the number of relevant social quarters;• the relevance of advance tax payments;• recent-start cases.
+Calculations to plan for
+A. Number of active months in the year
+months_active = number_of_months_between(max(activity_start_date, Jan 1), Dec 31)
+B. Number of social quarters
+quarters_active = number_of_quarters_from_start_date
+C. Annualization / non-annualization
+Two possible strategies depending on your product:
+Option 1 – Profit already annual
+If the amount requested later is already an annual estimate, no annualization is needed.
+Option 2 – Profit observed to date then extrapolated
+If the engine extrapolates partial income:
+annualized_profit = observed_profit / elapsed_months * 12
+Impact
+• provisional social contributions;• profit estimation on a partial year;• potential penalty logic related to advance tax payments.
+The document already mentions that this date is used for social contribution rules and penalties related to advance tax payments.
+Screen 4 — Type of Activity
+Choices:
+• Commercial activity• Liberal profession• Mixed activity
+Calculation logic
+Calculation effects
+This variable is mainly used to:
+• check consistency with the VAT regime;• categorize the profile;• possibly load simulation heuristics.
+Example engine usage
+activity_profile = activity_profile_rules[activity_type]
+The engine may use it to:
+• propose a different extrapolation;• display warnings;• activate certain business regimes.
+Important
+In a first version, this question may have an indirect rather than a purely mathematical impact.
+Additional page you added — VAT
+This page is not in the Word document, but you indicated that it must be integrated right after the activity type.
+Fields to provide
+• vat_registered = yes/no• vat_filing_frequency = monthly / quarterly• vat_regime = mixed / franchise / exempt / non_subject• vat_regime_detail
+Calculation logic
+This section does not necessarily directly impact the IPP calculation, but it influences:
+• the tax profile;• declarative obligations;• business consistency;• future cash-flow simulations.
+Backend rules
+If vat_registered = nothen:
+• vat_filing_frequency = null• vat_regime mandatory if exempt / non-subject
+If vat_registered = yesthen:
+• vat_filing_frequency mandatory• vat_regime mandatory
+Important dev point
+VAT is mainly a profile qualification dimension, not necessarily a variable in the base IPP calculation.
+6. PHASE 3 — Personal & Family Situation
+Screen 5 — Marital Status
+Choices:
+• Single• Married• Legally cohabiting• De facto cohabiting• Divorced• Separated• Widowed• If not Single → Since when?
+Calculation logic
+Fields:
+marital_statusmarital_status_since
+Engine effects
+This answer influences:
+• the tax household structure;• activation of the partner question;• the marital quotient logic;• certain family-dependents rules.
+The SPF Finances notes that the marital quotient consists of allocating to the low-income partner a share of the household’s professional income up to 30% of common professional income, with a legal cap, and that it is not applied if it increases the couple’s overall tax.
+Technical rule
+If marital_status in [married, legally_cohabiting]
+Activate:
+• partner_module = true• possible_conjugal_quotient = true
+If other status:
+• partner_module = false or limited• possible_conjugal_quotient = false
+Why “Since when?”
+This date is used to document a change in status and to avoid naively applying a “full-year” logic if the status is recent.
+Backend field
+marital_status_since
+Usage
+• consistency checks;• future temporal refinement;• tax audit trail.
+Screen 6 — Partner Income
+Displayed if Married or Legally Cohabiting:
+• No income• Less than €15,000/year• More than €15,000/year• Exact amount
+Calculation logic
+Fields:
+partner_income_modepartner_income_exact
+Main effect
+This variable feeds the marital quotient logic and the household’s economic allocation.
+Recommended calculation rule
+Case 1 — No income
+partner_prof_income = 0
+Case 2 — Less than 15,000
+Either:
+• keep only a UX class;• or force a median amount for approximate simulation.
+Example:
+partner_prof_income_estimated = 7500
+but it is better to request the exact amount as soon as possible.
+Case 3 — More than 15,000
+Same logic:
+partner_prof_income_estimated = configurable_default_above_threshold
+Case 4 — Exact amount
+partner_prof_income = entered_amount
+Marital quotient rule
+If:
+• the status allows household logic,• the partner has little or no professional income,
+then calculate a test:
+combined_prof_income = taxpayer_prof_income + partner_prof_incomemax_partner_share = min(30% * combined_prof_income, legal_cap)conjugal_transfer = max(0, max_partner_share - partner_prof_income)
+Then simulate tax:
+• without quotient;• with quotient;
+and keep the better result, since SPF Finances specifies that no marital quotient is applied if it increases the couple’s total tax.
+Critical dev point
+The “15,000” threshold must be treated as a UX threshold, not as an absolute tax rule.
+Screen 7 — Dependents
+Questions:
+• dependent children?• for each child: date of birth, recognized disability?• other dependents?
+Calculation logic
+Fields:
+• children[]• children_count• children_disabled_count• other_dependents_count
+Engine effects
+These data influence:
+• family dependents;• tax-free allowance / family tax benefit;• increases linked to certain specific situations.
+The SPF Finances provides specific rules for other dependents and also mentions the marital quotient on that same tax information page.
+Technical rule
+Children
+For each child:
+• validate existence at the fiscal reference date;• categorize by age if useful later;• mark disabled_flag.
+Aggregation
+dependent_children_count = len(children)disabled_children_count = count(children where disabled_flag = true)
+Other dependents
+other_dependents_count = entered_count
+Calculation impact
+The engine must have a configurable table of the form:
+family_tax_allowance = family_allowance_table(children_count, disabled_children_count, other_dependents_count, marital_status)
+Dev point
+The family logic must not be hardcoded in the interface.
+It must be managed in a versioned legal parameter table.
+Screen 8 — Date of Birth
+Calculation logic
+Field:
+birth_date
+Used to
+• validate statuses such as student self-employed or active pensioner;• apply eligibility rules;• make the profile more reliable.
+Technical rule
+age = fiscal_year_end - birth_date
+Checks
+• if self_employed_status = student_self_employed, then age consistency expected;• if self_employed_status = active_pensioner, then status may need checking.
+Impact
+Mostly indirect, but essential for tax consistency.
+Screen 9 — Municipality
+Field:
+municipality of residence
+Calculation logic
+Fields:
+• municipality_code• municipal_tax_rate
+The document already states that the municipality is used to calculate the municipal surcharge.SPF Finances does publish municipal surcharge rates.
+Calculation rule
+After calculating base IPP:
+municipal_surcharge = base_personal_income_tax * municipal_tax_rate
+Then:
+total_ipp = base_personal_income_tax + municipal_surcharge
+Dev point
+There must absolutely be:
+• a municipality -> rate table• versioned by assessment year• loaded separately from code
+7. PHASE 4 — Professional Income & IPP
+Screen 10 — Salaried Income
+Question:
+Have you received salaried income during this year?
+Calculation logic
+Field:
+has_salaried_income
+Main effect
+This integrates salaried income into global IPP.
+If No:
+taxable_salary_income = 0salary_withholding_tax = 0
+If Yes:
+open Screen 11.
+Impact
+This data changes:
+• the professional income base;• IPP progressivity;• the final balance calculation.
+Screen 11 — Salaried Income Details
+Questions:
+• taxable salaried income• withholding tax deducted
+Calculation logic
+Fields:
+• salaried_income_taxable• salary_withholding_tax_amount
+Professional withholding tax is a tax withheld at source on remuneration, and it reduces the final tax due.
+Calculation rule
+Salaried income
+professional_income_salary_component = salaried_income_taxable
+Credited taxes
+credited_withholding_tax += salary_withholding_tax_amount
+Global impact
+Salaried income increases the professional income base:
+total_professional_income_before_social = salaried_income_taxable + self_employed_profit + other_professional_income
+Then:
+• gross IPP is calculated on total income;• withholding tax is deducted from the balance.
+Final balance
+estimated_balance_due = total_tax_due - credited_withholding_tax - advance_payments
+“I don’t know” case
+If the user does not know the withholding tax:
+• store salary_withholding_tax_known = false• do not inject any credit• display a warning: estimate may be overstated
+Screen 12 — Estimated Self-Employed Profit
+Choices:
+• Manual estimation• Automatic extrapolation• Conservative simulation• I don’t know yet
+Calculation logic
+Fields:
+• estimated_profit_mode• estimated_annual_net_profit
+1. Manual estimation
+estimated_annual_net_profit = entered_amount
+2. Automatic extrapolation
+The engine must use available to-date data.
+Generic example:
+estimated_annual_net_profit = current_net_profit / elapsed_months * 12
+or, if no YTD profit is available, use a base from another module.
+3. Conservative simulation
+Use either:
+• a prudent low assumption,• or a safety coefficient.
+Example:
+estimated_annual_net_profit = auto_extrapolated_profit * conservative_factor
+where conservative_factor may be configurable, for example 0.85 or 0.9 depending on your product.
+4. I don’t know yet
+Two possible options:
+• force a minimal, non-committal simulation;• or display a partial result without a reliable final IPP.
+Critical dev point
+The engine must always distinguish:
+• estimated_profit_source = manual / extrapolated / conservative / unknown
+because the front end will need to display a reliability level.
+Screen 13 — Social Contributions
+Questions:
+• exempt?• which fund?• how much per quarter?
+Calculation logic
+Fields:
+• social_contrib_exempt• social_fund• social_contrib_quarterly_amount
+Independent contributions are organized according to status and income, with provisional contributions and regularizations. INASTI also distinguishes specific regimes and exemption requests for certain statuses.
+Recommended calculation rule
+Case 1 — Exempt
+estimated_social_contributions = 0
+or, in case of partial exemption:
+estimated_social_contributions = adjusted_exempt_value
+Case 2 — Not exempt
+The engine must be able to operate in two modes:
+Mode A — Theoretical calculation
+estimated_social_contributions = social_formula(status, estimated_annual_net_profit, social_fund_parameters)
+Mode B — Reality-anchored calculation
+current_annual_social_contributions = quarterly_amount * 4
+Then:
+• compare with the theoretical amount;• detect potential underpayment / overpayment;• estimate a regularization.
+Recommended variant
+estimated_social_contributions = max(theoretical_provisional, current_known_amount_based_projection)
+or a more flexible formula depending on your business rules.
+What needs to be coded
+An interface of the type:
+social_formula(status, annual_net_profit, social_fund, year)
+and a separate table:
+social_fund_config[fund][year]
+As you stated, you will provide the exact percentages by fund.
+So the code must be parametric, not hardcoded.
+Impact
+Social contributions influence:
+• total cost;• available net;• the overall economic base;• sometimes the advance tax payment recommendation.
+Screen 14 — Advance Tax Payments
+Choices:
+• No• Yes – Spread throughout the year• Yes – Optimize for maximum tax reduction
+Calculation logic
+Field:
+advance_payment_preference
+The SPF Finances provides for advance tax payments for self-employed taxpayers.
+Technical rule
+If No
+• advance_payment_plan = none• advance_payment_estimated = 0• possibly display surcharge risk
+If Spread
+advance_payment_target = estimated_balance_due_before_advances
+Spread over the remaining periods.
+Example:
+monthly_advance = advance_payment_target / remaining_months
+or using quarterly logic:
+quarterly_advance = advance_payment_target / remaining_quarters
+If Optimize
+The engine must propose the strategy that minimizes the burden or surcharge:
+• pay earlier;• distribute according to the tax calendar;• possibly recommend an amount higher than simple smoothing.
+Dev point
+This answer does not change gross tax, but changes:
+• cash-flow projection;• year-end balance;• the recommendation module.
+Screen 15 — Other Income
+Cases:
+• Rental income• Dividends• Foreign income• Alimony received• Other professional income
+Calculation logic
+Fields:
+• other_income_flags[]• other_income_amounts[]
+General rule
+Each category must be stored separately.Do not put everything into one single “other income amount”.
+Recommended structure
+• rental_income_amount• dividend_income_amount• foreign_income_amount• alimony_received_amount• other_professional_income_amount
+Why
+Because taxation differs depending on the nature of the income.
+Dividends
+Dividends are linked to withholding tax, in principle withheld at source.
+Foreign income
+It may affect the tax base, exemption with progressivity, or other mechanisms depending on treaties.
+Other professional income
+It must be added to the total professional base.
+Simplified calculation rule
+global_income = professional_income + rental_component + foreign_component + alimony_component + other_component
+But in the backend it is necessary to distinguish:
+• income to be globalized,• income subject to separate taxation,• income already subject to withholding.
+Product recommendation
+Even if the screen does not yet request amounts today, the backend must be ready to receive them.
+8. PHASE 5 — IPP Summary
+The document provides for displaying:
+• total taxable income• estimated social contributions• estimated personal income tax• municipal surcharge• estimated balance due• advance payment recommendation
+Consolidated calculation logic
+Conceptual formula:
+total_prof_income = salaried_income_taxable + estimated_self_employed_profit + other_professional_income
+net_after_social = total_prof_income - estimated_social_contributions
+taxable_base_adjusted = net_after_social + taxable_other_income_adjustments - family_reliefs
+base_ipp = ipp_brackets(taxable_base_adjusted)
+municipal_surcharge = base_ipp * municipal_tax_rate
+gross_total_tax = base_ipp + municipal_surcharge
+credited_taxes = salary_withholding_tax + other_withholdings + advance_payments_recorded
+estimated_balance_due = gross_total_tax - credited_taxes
+Dev point
+It is necessary to distinguish:
+• gross_estimated_tax• credited_prepayments• estimated_final_balance
+Otherwise the summary will be incomprehensible to the user.
+9. PHASE 6 — Company (ISOC)
+Screen S1 — Fiscal Year
+Questions:
+• start date• end date• SME reduced rate / standard rate
+Calculation logic
+Fields:
+• fiscal_year_start• fiscal_year_end• corporate_tax_regime_selected
+The SPF Finances confirms that a company files after the close of the accounting year and that the standard ISOC rate is 25%.
+Calculation rule
+Fiscal year duration
+fiscal_year_days = days_between(start, end) + 1
+This is used to:
+• manage shortened / extended fiscal years;• support prorating and controls.
+Rate
+corporate_tax_rate = company_tax_rate_table[selected_regime][tax_year]
+Important
+The reduced SME rate should not simply be “taken as true” without business validation.
+There need to be two levels:
+• selected_regime = reduced / standard• validated_regime = reduced / standard / pending_validation
+Calculation
+estimated_corporate_tax = estimated_net_taxable_profit * corporate_tax_rate
+Critical dev point
+The standard rate can be coded by default at 25%, but the reduced rate must be managed through parameters and separate validations.
+Screen S2 — Estimated Profit
+Question:
+estimated net taxable profit
+Calculation logic
+Field:
+estimated_net_taxable_profit
+This is the company’s taxable base.
+estimated_corporate_tax = estimated_net_taxable_profit * corporate_tax_rate
+remaining_company_cash = estimated_net_taxable_profit - estimated_corporate_tax
+Important point
+It is important to speak of net taxable profit, not turnover nor accounting gross profit.
+Screen S3 — Directors & Active Partners
+For each director:
+• full name• role• monthly gross salary• expected dividends• social contributions paid by company?• company car?
+Calculation logic
+This section feeds the Bridge Engine.
+1. Monthly gross salary
+Field:
+monthly_gross_salary
+Calculation:
+annual_gross_salary = monthly_gross_salary * 12
+It is used:
+• as a flow toward the natural person;• as a cost / economic distribution data point;• as the director’s IPP base.
+2. Expected dividends
+Field:
+expected_dividends
+Calculation:
+Dividends come after ISOC, then are in principle subject to withholding tax, generally withheld at source.
+Simplified formula:
+net_dividends = expected_dividends - dividend_withholding_tax
+The exact rate must remain configurable.
+3. Social contributions paid by company
+Field:
+social_contributions_paid_by_company
+Logic:
+If the company pays a personal charge of the director, this must be integrated as a tax impact on the director side.
+You are right: this may increase the economic taxable benefit and therefore may also modify projected contributions or IPP.
+4. Company car
+Field:
+company_car
+A company car made available for private use generates a benefit in kind. The SPF Finances specifies that the flat-rate benefit is calculated by applying a CO2 percentage to 6/7 of the catalogue value.
+Backend consequence
+If company_car = true, it is necessary either to:
+• collect the vehicle parameters later;• or apply a provisional estimated flat amount.
+Without complementary car-benefit details, the current variable does not allow an exact benefit-in-kind calculation.
+So it is necessary to plan either:
+• company_car = impact_flag_only• or a future screen with:o catalogue valueo fuel typeo CO2 emissionso first registration date
+10. PHASE 7 — Main Director Personal Tax Profile
+Screen D1 — Role Confirmation
+Pre-filled
+Calculation logic
+Field:
+director_role_confirmed
+No major mathematical effect, but used to:
+• confirm the relationship between the user and the director profile;• ensure that the right director’s IPP is being calculated.
+Screen D2 — Personal Situation
+Same structure as PHASE 3.
+Calculation logic
+Exactly the same as for the self-employed natural person:
+• marital status,• partner,• children,• date of birth,• municipality.
+Dev point
+The best approach is to reuse the same backend component:
+PersonTaxProfile
+Screen D3 — Additional Personal Income
+Question:
+personal income outside company remuneration?
+Calculation logic
+Field:
+additional_personal_income_outside_company
+Rule
+director_total_prof_income = annual_gross_salary + additional_personal_income_outside_company
+This avoids underestimating the director’s IPP if they also have:
+• another salary,• another activity,• other professional income.
+Screen D4 — Social Contributions
+Questions:
+• paid personally / by company• quarterly amount
+Calculation logic
+Fields:
+• director_social_paid_by = personal / company• director_social_quarterly_amount
+The document explicitly states: if paid by the company, the benefit-in-kind / taxability logic must be integrated.
+Base calculation
+annual_social_contributions = quarterly_amount * 4
+If paid personally:
+• deduct as a personal expense in the simulation• no additional taxable benefit linked to the payer
+If paid by company:
+• economic burden borne by the company• taxable impact on the director to be integrated according to your benefit logic
+Dev point
+Provide a field:
+director_social_company_paid_taxable_benefit = true/false
+Screen D5 — Advance IPP Payments
+Choices:
+• No• Yes – Spread• Yes – Optimize
+Calculation logic
+Identical to Screen 14, but applied to the director’s IPP.
+11. PHASE 8 — Consolidated Summary
+The document provides for:
+• Company: estimated taxable profit, corporate tax, remaining cash• Director: remuneration, social contributions, estimated IPP, net dividends• Combined view: total net personal income, global tax pressure, optimization suggestions
+Consolidated logic
+Company
+company_taxable_profitcompany_corporate_taxcompany_cash_after_tax
+Director
+director_gross_salary_annualdirector_social_contributionsdirector_estimated_ipp
+Combined view
+total_net_personal_income = director_net_salary_after_tax + director_net_dividends + other_personal_net_income
+global_tax_pressure = (corporate_tax + director_ipp + dividend_tax + social_contributions) / economic_total_generated
+Dev point
+The real challenge of this view is not just display, but overall economic consistency.
+12. Exact calculation rules to code by screen
+Here is the most usable version for the dev team.
+A. Routing questions
+These questions choose a branch:
+• taxable as self-employed or company• marital status• has salaried income• social contributions exempt• advance payments yes/no• has dependents yes/no• company directors yes/no
+Technical effect
+They activate conditional branches:
+if/else, conditional screens, conditional calculation blocks.
+B. Parameterization questions
+These questions inject a coefficient, rate, or profile:
+• self-employed status• municipality• corporate tax regime• social fund• VAT regime• partner income mode• company car yes/no
+Technical effect
+They feed:
+• table lookups,• tax scales,• business parameters,• tax flags.
+C. Amount questions
+These questions directly feed a formula:
+• taxable salary• withholding tax• estimated annual net profit• quarterly social contributions• exact partner income• company estimated taxable profit• monthly gross salary• expected dividends• additional personal income
+Technical effect
+They directly enter into:
+• additions,• subtractions,• projections,• taxable base.
+D. Descriptive questions with indirect effect
+• type of activity• date of birth• role• date since marital status• description of other dependents
+Technical effect
+Validation, consistency, audit, future refinements.
+13. Essential configuration tables
+Developers must not hardcode these values.
+Table 1 — Municipal tax rates
+municipality_code -> rate -> tax_year
+The SPF Finances publishes municipal rates.
+Table 2 — Social contributions parameters
+self_employed_status + fund + tax_year -> formula parameters
+Table 3 — Family allowances / dependents
+children_count + disabled_flags + other_dependents -> allowance
+Table 4 — Corporate tax rates
+selected_regime + tax_year -> corporate_tax_rate
+Table 5 — Dividend withholding
+dividend_regime -> withholding_rate
+Table 6 — Company car benefit in kind
+catalog_value + co2 + fuel_type + first_registration_date -> annual_benefit
+The SPF Finances does indeed provide the 6/7 catalogue value logic and the CO2 percentage.
+14. Simplified final calculation logic to implement
+Individual
+Load personal and family data
+Determine taxable salaried income
+Determine estimated professional profit
+Add other professional income
+Calculate estimated social contributions
+Determine net professional income
+Test marital quotient if applicable
+Apply family dependents logic
+Calculate gross IPP
+Calculate municipal surcharge
+Deduct professional withholding tax
+Deduct advance payments
+Return estimated balance
+Company
+Load fiscal year
+Load net taxable profit
+Apply ISOC rate
+Calculate corporate tax
+Calculate after-tax cash
+For each director:
+annualize remuneration
+calculate net dividends
+integrate social contributions
+integrate any benefit in kind
+calculate director IPP
+Consolidate company + director view
+15. The most important point for developers
+They must understand that each question belongs to one of these 4 categories:
+1. Routing question
+It selects a journey.
+2. Tax parameterization question
+It loads a rate, a rule, or a table.
+3. Monetary question
+It directly enters a formula.
+4. Consistency question
+It secures the quality of the calculation, even if it does not directly enter the formula.
+This is exactly how this module must be developed, otherwise they risk:
+• mixing routing and calculation;• hardcoding rates;• losing the distinction between estimate and certain amount;• making the module impossible to maintain.

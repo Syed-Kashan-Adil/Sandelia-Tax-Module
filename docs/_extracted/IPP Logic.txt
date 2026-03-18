@@ -1,0 +1,141 @@
+IPP Calculation:
+Taxation is done by tax brackets:
+Each person is entitled to a tax-free allowance of €10,910. This means that this part of the income is not taxed within the income tax brackets.
+This allowance may increase in certain cases (dependent children / age / marital status / etc.).
+Example:
+Jean lives in Belgium, is single, and has no children or other dependents. He earns a taxable income of €38,000.
+His basic tax is calculated as follows:
+First, Jean’s income is divided into brackets, in accordance with the table above. The corresponding tax rate is then applied to each income bracket:
+In the first bracket, Jean earns €16,320 (€16,320 - €0). A rate of 25% is applied to this bracket. Jean therefore has to pay €4,080 tax in the first bracket.
+In the second bracket, Jean earns €12,480 (€28,800 - €16,320). A rate of 40% is applied to this bracket. Jean therefore has to pay €4,992 tax in the second bracket.
+In the third bracket, Jean earns €9,200 (€38,000 - €28,800). A rate of 45% is applied to this bracket. Jean therefore has to pay €4,140 tax in the third bracket.
+We obtain the total tax by adding the amounts from the different brackets:
+€4,080 + €4,992 + €4,140 = €13,212
+It now remains to take into account the tax-free allowance.
+To do this, we first calculate the amount of tax Jean would in principle have to pay on the amount of income covered by the tax-free allowance.
+For Jean, the tax-free portion of income amounts to €10,910. For this amount, the tax rate is 25%. Jean is therefore entitled to a tax exemption of €2,727.50 (25% of €10,910).
+We subtract this exempt amount from the total tax calculated in step 2:
+€13,212 - €2,727.50 = €10,484.50
+Jean therefore has to pay €10,484.50 in tax.
+Logic of the date of birth:
+This rule is notably used for:
+• certain age-related tax reductions• certain benefits for pensioners
+The date of birth makes it possible to know whether the person benefits from an age-related increase.
+Typical cases:
+• persons ≥ 65 years old• certain pension situations
+Dependent children
+The tax-free allowance increases:
+Dependent children
+Increase
+1 child
+~ €1,920
+2 children
+~ €4,950
+3 children
+~ €11,090
+4 children
+~ €17,940
+More than 4 children
+€17,940 + €6,850 per additional child
+Additional child amount
+~ €6,850
+A child with a severe disability counts as 2 children, meaning €4,950 of tax-free allowance.
+For each child under 3 years old on 1 January of the assessment year, there is an additional increase of €720.
+Dependents other than children:
+Amount of the increase in the tax-free allowance
+Amount
+parent, grandparent / great-grandparent, half-brother / half-sister or sibling aged 65 or over and in a situation of dependency
+€5,770
+parent, grandparent / great-grandparent, half-brother / half-sister or sibling aged 65 or over with a severe disability and requiring care, who was already dependent on you during assessment year 2021 in that capacity
+€7,700
+parent, grandparent / great-grandparent, half-brother / half-sister or sibling aged 65 or over not requiring care, who was already dependent on you during assessment year 2021 in that capacity
+€3,850
+parent, grandparent / great-grandparent, half-brother / half-sister or sibling aged 65 or over not requiring care, who was already dependent on you during assessment year 2021 in that capacity, with a severe disability
+€7,700
+other dependents
+€1,920
+other dependents with a severe disability
+€3,840
+Married or legally cohabiting — tax impact:
+The “marital quotient” allows up to 30% (max. €13,050 for 2024 / income 2025) of the professional income of the higher-earning spouse to be fictitiously allocated to the other spouse, reducing the household’s total tax burden. The goal is to reduce tax pressure, especially if one of the partners does not work or works little.
+Example:
+Married couple / legally cohabiting partners
+• Spouse A: €60,000• Spouse B: €0
+Deduction of the employee professional expenses lump sum: €5,930
+60,000 – 5,930 = 54,070
+Transfer calculation → 30% of 54,070 = €16,221, but note the maximum is €13,050
+A = 54,070 – 13,050 = 41,020B = 13,050
+Why this is advantageous: the transferred income from A is taxed less because it reduces A’s taxable base, therefore a lower tax bracket applies. The other spouse here is taxed at 25%.
+Tax calculation by brackets
+Spouse A
+Base: €41,020
+Bracket
+Amount
+Rate
+Tax
+0 – 15,200
+15,200
+25%
+3,800
+15,200 – 26,830
+11,630
+40%
+4,652
+26,830 – 41,020
+14,190
+45%
+6,386
+Tax A = €14,838
+Spouse B
+Base: €13,050
+Bracket
+Amount
+Rate
+Tax
+0 – 13,050
+13,050
+25%
+3,262.50
+Total gross tax:
+14,838 + 3,262.50 = 18,100.50
+Reduction of the tax-free allowance
+The tax-free allowance is converted into a tax reduction at the rate of 25%.
+Per person: 10,910 × 25% = €2,727.50For both: 2,727.50 × 2 = €5,455
+Taxes:
+18,100.50 - 5,455 = 12,645.50 = federal tax
+Municipal tax (example Overijse)7.3% of 12,645.50 = €923
+Total tax ≈ €13,568.62
+Employee / worker remuneration — form 281.10:
+The most important amount on form 281.10 is:
+• Taxable remuneration (This is the taxable base used for the IPP calculation.)
+On the form, this is generally box:
+Code 1250 / 2250
+Withholding tax
+Professional withholding tax retainedCode: 1286 / 2286
+Benefits in kind (BIK)
+Certain benefits must be added to income.
+Examples:
+• company car• housing• computer• mobile phone
+On the form:
+code 250 / 2250 depending on the case
+Secondary self-employed:
+Take:
+• income• expenses• social contributions
+= taxable income comes directly from the accounts
+Salaried income + secondary self-employed income are taxed.
+If self-employed as main activity:
+Take:
+• income• expenses• withholding tax if there is withholding tax• social contributions
+= taxable income comes directly from the accounts
+For company directors:
+The main income comes from form 281.20.
+The most important box is:
+Remuneration of company directorscode 1400 / 2400
+This amount corresponds to:
+• manager remuneration• director remuneration• management fees• bonuses• benefits in kind
+➡ This is the director’s gross taxable income.
+Social contributions
+Directors pay self-employed social contributions.These contributions are tax deductible.
+Professional withholding tax
+If the company has withheld withholding tax:
+On form 281.20code 1450 / 2450 is deducted.

@@ -1,0 +1,62 @@
+Technical Specification – Social Contributions Calculation (Simulation 2026)
+1. Engine Objective
+This engine calculates an estimated social contribution for a self-employed person based on an estimated net income provided by the user.
+It does not reproduce the full administrative logic of Belgian social insurance funds, such as:
+provisional contributions
+N-3 income basis
+later adjustments (regularization)
+Instead, it provides a direct estimation based on the 2026 contribution rates.
+The goal is to minimize the risk of future regularization.
+Social contributions are paid on a quarterly basis.
+2. Definition of Estimated Net Income
+The estimated net income corresponds to the estimated annual professional income after deducting professional expenses.
+Formula
+estimated_net_income = estimated_professional_income - estimated_professional_expenses
+Example
+Estimated income: €80,000
+Estimated expenses: €30,000
+Estimated net income: €50,000
+3. Supported Status Types
+The engine must support the following statuses:
+self_employed_principalself_employed_secondaryarticle_37assisting_spouse_maxiactive_retired
+4. 2026 Contribution Rates by Status
+Self-employed (Principal)
+0 → 17,374.08 € → minimum €917.58 per quarter
+17,374.08 → 75,024.54 € → 20.50 %
+75,024.54 → 110,562.42 € → 14.16 %
+110,562.42 € → 0 %
+Self-employed (Secondary)
+0 → 1,922.16 € → minimum €102.65 per quarter
+1,922.16 → 75,024.54 € → 20.50 %
+75,024.54 → 110,562.42 € → 14.16 %
+110,562.42 € → 0 %
+Article 37
+0 → 1,922.16 € → minimum €102.65 per quarter
+1,922.16 → 9,101.26 € → 20.50 %
+9,101.26 € → switch to principal status
+Assisting Spouse (Maxi Status)
+0 → 7,632.44 € → minimum €391.16 per quarter
+7,632.44 € → 20.50 %, then 14.16 %
+Active Retired Person
+0 → 1,922.16 € → 0 €
+1,922.16 € → 14.70 %, then 14.16 %
+5. Management Fees Calculation
+After calculating the legal contribution, the social insurance fund management fees must be added.
+Partena Management Fee Rate
+4.20 %
+Formula
+total_contribution = legal_contribution × 1.042
+6. Engine Calculation Flow
+retrieve social_status
+retrieve estimated_professional_income
+retrieve estimated_professional_expenses
+calculate estimated_net_income
+apply rate table according to status
+apply minimum contribution if applicable
+calculate legal_quarterly_contribution
+add management fees (4.20 %)
+return total_quarterly_contribution
+7. Engine Pseudo Code
+def calculate_contribution(status, net_income): legal_contribution = calculate_rate(status, net_income) total_contribution = legal_contribution * 1.042 return total_contribution
+8. Backend Variables
+social_statusestimated_professional_incomeestimated_professional_expensesestimated_net_incomelegal_contributionquarterly_contributiontotal_contributionmanagement_fee_rate

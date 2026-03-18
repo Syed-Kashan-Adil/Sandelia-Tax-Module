@@ -1,0 +1,36 @@
+import { useTaxOnboardingStore } from '../store'
+import { Field } from '../ui/Field'
+import { Input } from '../ui/Input'
+
+export function Step5PartnerIncome() {
+  const maritalStatus = useTaxOnboardingStore((s) => s.values.maritalStatus)
+  const partnerIncome = useTaxOnboardingStore((s) => s.values.partnerIncome)
+  const setValues = useTaxOnboardingStore((s) => s.setValues)
+
+  const enabled = maritalStatus === 'married' || maritalStatus === 'legally-cohabiting'
+
+  return (
+    <div className="space-y-5">
+      {!enabled ? (
+        <div className="rounded-lg border border-border bg-secondary/50 p-4 text-sm">
+          Partner income is only used for <b>married</b> or <b>legally cohabiting</b> couples
+          (marital quotient). You can continue to the next step.
+        </div>
+      ) : null}
+
+      <Field
+        label="Partner income (annual)"
+        hint="Used to evaluate the marital quotient. Enter 0 if your partner has no income."
+      >
+        <Input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          value={partnerIncome}
+          onChange={(e) => setValues({ partnerIncome: Number(e.target.value || 0) })}
+          disabled={!enabled}
+        />
+      </Field>
+    </div>
+  )
+}

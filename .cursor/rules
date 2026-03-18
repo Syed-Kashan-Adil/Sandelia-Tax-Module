@@ -1,0 +1,53 @@
+You are an expert developer proficient in TypeScript, React (Web/Native), Next.js, Vite, Expo (React Native), TanStack Query, Zod, Zustand, Tailwind CSS (v4), Radix UI, React Hook Form, and Monorepo Management (Turbo/Solito).
+
+1. Code Style and Structure
+
+- Write concise, technical TypeScript code with accurate examples.
+- Use Functional and Declarative programming patterns; avoid classes (except for minimal API wrappers).
+- Prefer modularity and iteration over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError, isAdmin).
+- Favor named exports for all components and functions.
+- Component files should be kept under 250 lines when possible. Use /* eslint-disable max-lines */ with justification if exceeding.
+- File Naming: Use PascalCase for component files/directories (e.g., UserCard/UserCard.tsx); use camelCase for utilities, services, and hooks.
+- JSX: Write clear, declarative JSX; do not use nested ternary operators.
+
+2. TypeScript, Zod, and Typing
+
+- Use TypeScript strict mode for all code.
+- Prefer interfaces over types for object shapes (allowing for easier extension/declaration merging).
+- Use Zod for schema validation and type inference, defining schemas in the src/schema/ directory.
+- Use Enums for defining constant sets of related values. Enum Type Name must be in PascalCase (e.g., UserRole), and member values must be in UPPER_SNAKE_CASE (e.g., USER_ADMIN, ADMIN_ROLE).
+- Prefer optional chaining (?.) and nullish coalescing (??) for safe property access.
+
+3. UI and Styling (Tailwind v4 & Shadcn/ui)
+
+- Implement responsive design with a mobile-first approach.
+- Use Tailwind CSS (v4) for styling consistency across web applications.
+- Use class-variance-authority (CVA) for managing component variants.
+- Use Radix UI primitives for accessible components (standard for Shadcn/ui).
+- Use the cn() utility (clsx + tailwind-merge) for resolving class conflicts and handling conditional classes.
+- Use forwardRef for form components that need ref forwarding (for React Hook Form integration).
+
+4. State, Data Fetching, and Forms
+
+- Server State: Use TanStack React Query for data fetching, caching, and synchronization. Structure query keys as arrays with dependencies.
+- Client State: Use Zustand for client-side state management; use Context API only when explicitly required (e.g., theme, auth context).
+- Forms: Use React Hook Form with Zod resolver (zodResolver).
+- Form Validation: Use superRefine for complex conditional validation and Controller for controlled components.
+- Side Effects: Minimize useEffect and setState; favor derived state and memoization (useMemo/useCallback) without unnecessary overhead.
+
+5. Error Handling and API
+
+- Logic Flow: Prioritize error handling and edge cases using early returns and guard clauses at the beginning of functions.
+- API: Use a centralized API/service layer (e.g., Axios instance) to handle requests and error trapping.
+- Error Reporting: Use toast notifications for all user-facing errors.
+- Service Returns: Return typed data on success or a predictable value (e.g., false or null) on failure from service functions (avoiding uncaught component-level exceptions).
+
+6. Project Structure and Conventions
+
+- Organization: Organize by feature/domain: pages/, components/, hooks/, utils/, services/, schema/, constants/.
+- Constants: Define constants in the src/constants/ directory. Use UPPER_SNAKE_CASE (e.g., API_BASE_URL).
+- Routing: Use React Router DOM v6+ (for Vite) with route guards (ProtectedRoute). Use useNavigate and useParams hooks.
+- Monorepo: Follow best practices using Turbo for monorepo setups, utilizing apps/ and packages/ structure. Utilize custom generators (turbo gen).
+- Commits: Follow the Conventional Commit format with subject line within 72 characters (enforced by Husky/commitlint).
+- Always prioritize using reusable components from the project's @/components directory (e.g., <Button>, <Input>, <Card>) instead of their raw HTML equivalents (<button>, <input>, <div>) when a suitable component exists.
