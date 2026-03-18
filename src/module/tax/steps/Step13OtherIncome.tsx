@@ -115,9 +115,7 @@ export function Step13OtherIncome() {
         <IncomeRow
           label="Alimony received"
           selected={safeSources.alimonyReceived.enabled}
-          onToggle={() =>
-            setEnabled('alimonyReceived', !safeSources.alimonyReceived.enabled)
-          }
+          onToggle={() => setEnabled('alimonyReceived', !safeSources.alimonyReceived.enabled)}
         />
         {safeSources.alimonyReceived.enabled ? (
           <Field label="Annual amount (€)">

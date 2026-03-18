@@ -26,7 +26,10 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     ],
     sources: [
       { doc: 'Taxes Logic calculation .docx', ref: 'Screen 2 — Self-Employed Status' },
-      { doc: 'Social Contributions Calculation logic.docx', ref: 'Supported Status Types / Rate table' },
+      {
+        doc: 'Social Contributions Calculation logic.docx',
+        ref: 'Supported Status Types / Rate table',
+      },
     ],
   },
   3: {
@@ -104,7 +107,9 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
       'Estimate annual professional income and expenses.',
       'Net income (= income − expenses) is used for social contributions and taxable base.',
     ],
-    sources: [{ doc: 'Taxes Logic calculation .docx', ref: 'Screen 12 — Estimated Self-Employed Profit' }],
+    sources: [
+      { doc: 'Taxes Logic calculation .docx', ref: 'Screen 12 — Estimated Self-Employed Profit' },
+    ],
   },
   12: {
     title: 'Social contributions → automatic estimate (with override)',
@@ -141,4 +146,3 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     sources: [{ doc: 'Taxes Logic calculation .docx', ref: 'Fundamental rule: calculation order' }],
   },
 }
-
