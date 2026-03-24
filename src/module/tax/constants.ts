@@ -48,6 +48,8 @@ export const IPP_2026 = {
       b2: 75024.54,
       b3: 110562.42,
       article37Switch: 9101.26,
+      /** Assisting spouse (maxi): income up to this uses minimum base annual only */
+      assistingSpouseMaxiUpToIncome: 7632.44,
       /** Student self-employed: zone 1 upper bound (final €0; provisional minimum unless exempt) */
       studentZone1Max: 8687.03,
       /** Student: switch to standard main-style logic */
@@ -72,6 +74,11 @@ export const IPP_2026 = {
       assistingSpouseMaxi: 1564.64,
       student: 394.04,
     },
+    /**
+     * Partena published all-in total when main-activity **minimum** applies (income ≤ b1).
+     * Slightly below legal × 1.042 due to official table rounding (927.82 €/quarter × 4).
+     */
+    publishedMainMinimumAnnualPartena: 3711.28,
     /** Fund fee applied to the legal annual amount after max(minimum, calculated) */
     fundFeeRates: {
       partena: 0.042,

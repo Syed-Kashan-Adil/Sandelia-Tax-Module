@@ -22,6 +22,41 @@ function standardTwoBandLegal(income: number): number {
   return roundToCents(first + second)
 }
 
+/**
+ * Main self-employed (Partena-style): minimum base only while income ≤ b1; above b1 up to b2,
+ * full income × 20.5% (no max against minimum — see Partena table).
+ */
+function legalMainSelfEmployed(income: number): number {
+  const { b1, b2 } = IPP_2026.socialContributions.boundaries
+  const { rateMain } = IPP_2026.socialContributions.rates
+  const m = IPP_2026.socialContributions.minimumBaseAnnual
+  const inc = roundToCents(clampNonNegative(income))
+  if (inc <= b1) return m.main
+  if (inc <= b2) return roundToCents(inc * rateMain)
+  return standardTwoBandLegal(inc)
+}
+
+/** Secondary: minimum only while income ≤ b0; then same proportional rules as main up to b2. */
+function legalSecondarySelfEmployed(income: number): number {
+  const { b0, b2 } = IPP_2026.socialContributions.boundaries
+  const { rateMain } = IPP_2026.socialContributions.rates
+  const m = IPP_2026.socialContributions.minimumBaseAnnual
+  const inc = roundToCents(clampNonNegative(income))
+  if (inc <= b0) return m.secondary
+  if (inc <= b2) return roundToCents(inc * rateMain)
+  return standardTwoBandLegal(inc)
+}
+
+function legalAssistingSpouseMaxi(income: number): number {
+  const { b2, assistingSpouseMaxiUpToIncome } = IPP_2026.socialContributions.boundaries
+  const { rateMain } = IPP_2026.socialContributions.rates
+  const m = IPP_2026.socialContributions.minimumBaseAnnual
+  const inc = roundToCents(clampNonNegative(income))
+  if (inc <= assistingSpouseMaxiUpToIncome) return m.assistingSpouseMaxi
+  if (inc <= b2) return roundToCents(inc * rateMain)
+  return standardTwoBandLegal(inc)
+}
+
 function pensionerLegal(income: number): number {
   const { b2, b3 } = IPP_2026.socialContributions.boundaries
   const { pensionerLow, pensionerHigh } = IPP_2026.socialContributions.rates
@@ -62,7 +97,7 @@ function studentLegal(income: number, exempt: boolean): number {
     const calc = slice * rateMain
     return roundToCents(Math.max(calc, m.secondary))
   }
-  return roundToCents(Math.max(standardTwoBandLegal(inc), m.main))
+  return legalMainSelfEmployed(inc)
 }
 
 function computeLegalAnnualBeforeFees(params: {
@@ -76,18 +111,19 @@ function computeLegalAnnualBeforeFees(params: {
 
   switch (params.status) {
     case 'main':
-      return roundToCents(Math.max(standardTwoBandLegal(income), m.main))
+      return legalMainSelfEmployed(income)
     case 'complementary':
-      return roundToCents(Math.max(standardTwoBandLegal(income), m.secondary))
+      return legalSecondarySelfEmployed(income)
     case 'article37': {
       if (income <= b0) return m.article37
-      if (income > article37Switch) {
-        return roundToCents(Math.max(standardTwoBandLegal(income), m.main))
-      }
-      return roundToCents(Math.max(standardTwoBandLegal(income), m.article37))
+      if (income > article37Switch) return legalMainSelfEmployed(income)
+      const { b2 } = IPP_2026.socialContributions.boundaries
+      const { rateMain } = IPP_2026.socialContributions.rates
+      if (income <= b2) return roundToCents(income * rateMain)
+      return standardTwoBandLegal(income)
     }
     case 'assisting-spouse-maxi':
-      return roundToCents(Math.max(standardTwoBandLegal(income), m.assistingSpouseMaxi))
+      return legalAssistingSpouseMaxi(income)
     case 'assisting-spouse-mini':
       return assistingSpouseMiniLegal(income)
     case 'active-pensioner':
@@ -129,14 +165,24 @@ export function computeSocialContributions(params: {
     annualNetIncome: baseIncome,
     studentExempt,
   })
-  const annualAmount = roundToCents(legalAnnualBeforeFees * (1 + feeRate))
+
+  const b1 = IPP_2026.socialContributions.boundaries.b1
+  let annualAmount = roundToCents(legalAnnualBeforeFees * (1 + feeRate))
+  let quarterlyAmount = roundToCents(annualAmount / 4)
+
+  // Main minimum plateau: Partena table is 3,711.28 €/y (927.82 €/q), not exactly minBase × 1.042
+  if (params.status === 'main' && baseIncome <= b1 && params.socialInsuranceFund === 'partena') {
+    annualAmount = IPP_2026.socialContributions.publishedMainMinimumAnnualPartena
+    quarterlyAmount = roundToCents(annualAmount / 4)
+  }
+
   return {
     status: params.status,
     baseIncome,
     legalAnnualBeforeFees,
     fundFeeRate: feeRate,
     annualAmount,
-    quarterlyAmount: roundToCents(annualAmount / 4),
+    quarterlyAmount,
     method: 'calculated',
   }
 }
