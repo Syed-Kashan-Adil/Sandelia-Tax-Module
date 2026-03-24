@@ -5,6 +5,7 @@ export type SelfEmployedStatus =
   | 'complementary'
   | 'article37'
   | 'assisting-spouse-maxi'
+  | 'assisting-spouse-mini'
   | 'active-pensioner'
   | 'student'
 
@@ -93,6 +94,8 @@ export interface TaxOnboardingValues {
   socialInsuranceFund: 'securex' | 'xerius' | 'liantis' | 'ucm' | 'partena' | 'other'
   currentQuarterlySocialContribution: number
   socialContributionsOverride: number | null
+  /** Student self-employed zone 1: if true, provisional contribution €0 instead of minimum */
+  studentSocialExemption: boolean
 
   // Step 12
   advanceTaxPaymentsMode: 'none' | 'spread' | 'optimize'
@@ -112,6 +115,10 @@ export interface TaxOnboardingValues {
 export interface SocialContributionsBreakdown {
   status: SelfEmployedStatus
   baseIncome: number
+  /** Legal annual amount before social fund fee (after max vs minimum base) */
+  legalAnnualBeforeFees: number
+  /** Fee rate applied to legal amount (0 if override / unknown split) */
+  fundFeeRate: number
   annualAmount: number
   quarterlyAmount: number
   method: 'calculated' | 'override'
@@ -163,7 +170,10 @@ export interface TaxSummary {
   vatRegime: TaxOnboardingValues['vatRegime']
   /** For display: income breakdown */
   salariedIncome: number
+  /** Turnover (or extrapolated/YTD income) minus professional expenses — before social contributions */
   selfEmployedProfit: number
+  /** Self-employed profit minus deductible social contributions (IPP input before marital quotient / allowances) */
+  selfEmployedNetForIpp: number
   otherIncome: number
   /** For display: family situation */
   childrenCount: number

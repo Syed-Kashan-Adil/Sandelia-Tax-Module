@@ -60,6 +60,7 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
   socialInsuranceFund: 'partena',
   currentQuarterlySocialContribution: 0,
   socialContributionsOverride: null,
+  studentSocialExemption: false,
   advanceTaxPaymentsMode: 'none',
   advanceTaxPayments: 0,
   otherIncomeSources: {
@@ -136,6 +137,8 @@ export const useTaxOnboardingStore = create<TaxOnboardingState>()(
           ...defaultTaxOnboardingValues,
           ...p.values,
           otherDependents: p.values.otherDependents ?? defaultTaxOnboardingValues.otherDependents,
+          studentSocialExemption:
+            p.values.studentSocialExemption ?? defaultTaxOnboardingValues.studentSocialExemption,
         }
         return { ...c, step: p.step ?? c.step, values } as TaxOnboardingState
       },

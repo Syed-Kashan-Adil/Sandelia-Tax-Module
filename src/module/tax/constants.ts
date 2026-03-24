@@ -10,11 +10,10 @@ export const IPP_2026 = {
     eligibleStatuses: ['married', 'legally-cohabiting'] as const,
   },
   federalBrackets: [
-    { from: 0, to: 17374.08, rate: 0.25 },
-    { from: 17374.08, to: 75024.54, rate: 0.4 },
-    { from: 75024.54, to: 110562.42, rate: 0.45 },
-    // As specified in the provided logic document.
-    { from: 110562.42, to: null, rate: 0.0 },
+    { from: 0, to: 16720, rate: 0.25 },
+    { from: 16720, to: 29510, rate: 0.4 },
+    { from: 29510, to: 51070, rate: 0.45 },
+    { from: 51070, to: null, rate: 0.5 },
   ] as const,
   dependentsAllowance: {
     oneChild: 1920,
@@ -40,29 +39,47 @@ export const IPP_2026 = {
     seniorAge: 65,
     seniorAllowance: 5770,
   },
+  // Social contributions: legal % on net professional income, compare to minimum BASE (no fund fee),
+  // then apply fund fee. See Social contributions calculation logic-New.docx
   socialContributions: {
-    managementFeeRate: 0.042,
     boundaries: {
       b0: 1922.16,
       b1: 17374.08,
       b2: 75024.54,
       b3: 110562.42,
       article37Switch: 9101.26,
-      assistingSpouseMinBand: 7632.44,
+      /** Student self-employed: zone 1 upper bound (final €0; provisional minimum unless exempt) */
+      studentZone1Max: 8687.03,
+      /** Student: switch to standard main-style logic */
+      studentZone2Max: 17374.08,
+      /** Assisting spouse mini: first band ends here, second starts next cent */
+      assistingSpouseMiniFirstBandEnd: 75024.53,
+      assistingSpouseMiniSecondBandStart: 75024.54,
     },
     rates: {
       rateMain: 0.205,
       rateHighBand: 0.1416,
-      activeRetiredRateFirst: 0.147,
-      activeRetiredRateHighBand: 0.1416,
+      pensionerLow: 0.03675,
+      pensionerHigh: 0.0354,
+      assistingSpouseMiniLow: 0.0079,
+      assistingSpouseMiniHigh: 0.0051,
     },
-    minimumsPerQuarter: {
-      main: 917.58,
-      secondary: 102.65,
-      article37: 102.65,
-      assistingSpouseMaxi: 391.16,
-      activeRetired: 0,
-      student: 102.65,
+    /** Minimum annual contribution before fund fees (€/year) */
+    minimumBaseAnnual: {
+      main: 3562.04,
+      secondary: 394.04,
+      article37: 394.04,
+      assistingSpouseMaxi: 1564.64,
+      student: 394.04,
     },
+    /** Fund fee applied to the legal annual amount after max(minimum, calculated) */
+    fundFeeRates: {
+      partena: 0.042,
+      xerius: 0.0305,
+      securex: 0.041,
+      ucm: 0.0405,
+      liantis: 0.0395,
+      other: 0.042,
+    } as const,
   },
 } as const

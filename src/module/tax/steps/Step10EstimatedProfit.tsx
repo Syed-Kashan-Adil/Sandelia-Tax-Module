@@ -44,7 +44,7 @@ export function Step10EstimatedProfit() {
       <div className="grid gap-3">
         <ModeOption
           title="Manual estimation"
-          description="Enter your own estimated annual net profit"
+          description="Enter estimated annual professional income (e.g. turnover) and expenses; profit = income − expenses."
           selected={profitEstimationMode === 'manual'}
           onSelect={() => setValues({ profitEstimationMode: 'manual' })}
         />
@@ -77,7 +77,7 @@ export function Step10EstimatedProfit() {
         hint={
           profitEstimationMode === 'automatic-extrapolation'
             ? `We will extrapolate to 12 months using your start date (≈ ${months} month(s) so far).`
-            : 'Used to estimate both federal tax and social contributions.'
+            : 'Professional income before expenses. IPP uses profit (income − expenses), then deducts social contributions.'
         }
       >
         <Input
@@ -103,7 +103,7 @@ export function Step10EstimatedProfit() {
 
       <Field
         label="Estimated professional expenses (annual)"
-        hint="Used to estimate net income for social contributions: net = income − expenses."
+        hint="Subtracted from professional income to obtain profit. Social contributions and IPP use this profit (IPP also deducts social)."
       >
         <Input
           type="number"
@@ -117,7 +117,7 @@ export function Step10EstimatedProfit() {
         />
       </Field>
 
-      <Field label="Estimated annual profit used in simulation">
+      <Field label="Estimated annual profit (income − expenses) used in simulation">
         <Input value={annualIncome.toFixed(2)} disabled />
       </Field>
     </div>

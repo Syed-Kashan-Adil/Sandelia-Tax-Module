@@ -8,6 +8,11 @@ import { clampNonNegative, roundToCents } from './money'
 import { computeEstimatedAnnualProfessionalIncome } from './profitEstimation'
 import { computeSocialContributions } from './socialContributions'
 
+/** Shared household allowances (children, young children, other dependents) split across taxpayers */
+function ippAllowanceSharePerPartner(hasPartner: boolean, allowance: number): number {
+  return roundToCents(hasPartner ? allowance / 2 : allowance)
+}
+
 export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const salariedIncome = values.hasSalariedIncome ? values.salariedIncome : 0
   const withholdingTax = values.hasSalariedIncome
@@ -31,12 +36,35 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     clampNonNegative(clampNonNegative(salariedIncome) - lumpSum)
   )
 
-  const estimatedAnnualProfessionalIncome = computeEstimatedAnnualProfessionalIncome(values)
-
-  // Professional income is used for marital quotient in the document example.
-  const userProfessionalIncome = roundToCents(
-    userSalaryAfterExpenses + clampNonNegative(estimatedAnnualProfessionalIncome)
+  // 1. Professional income: turnover (or YTD extrapolation / manual entry) − expenses = profit
+  const annualTurnoverOrProfessionalIncome = computeEstimatedAnnualProfessionalIncome(values)
+  const professionalExpenses = roundToCents(clampNonNegative(values.estimatedProfessionalExpenses))
+  const selfEmployedProfit = roundToCents(
+    clampNonNegative(clampNonNegative(annualTurnoverOrProfessionalIncome) - professionalExpenses)
   )
+
+  // 2. Social contributions on profit (fully deductible from taxable income for IPP)
+  const socialContributions = computeSocialContributions({
+    status: values.selfEmployedStatus,
+    annualNetIncome: selfEmployedProfit,
+    overrideAnnualAmount: values.isSocialContributionsExempt
+      ? 0
+      : values.currentQuarterlySocialContribution > 0
+        ? values.currentQuarterlySocialContribution * 4
+        : values.socialContributionsOverride,
+    socialInsuranceFund: values.socialInsuranceFund,
+    studentSocialExemption: values.studentSocialExemption,
+  })
+
+  const deductibleSocialAnnual = socialContributions.annualAmount
+
+  // 3. Net taxable self-employed slice for IPP (before marital quotient)
+  const selfEmployedNetForIpp = roundToCents(
+    clampNonNegative(selfEmployedProfit - deductibleSocialAnnual)
+  )
+
+  // Salary is already reduced by lump-sum professional expenses where applicable.
+  const userProfessionalIncome = roundToCents(userSalaryAfterExpenses + selfEmployedNetForIpp)
 
   const userIncome = roundToCents(userProfessionalIncome + clampNonNegative(values.otherIncome))
 
@@ -59,27 +87,47 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     userDateOfBirthIso: values.dateOfBirth,
   })
 
-  // Document method: compute gross tax on income by brackets, then subtract a 25% tax reduction
-  // based on the (increased) tax-free allowance.
-  const baseIncomeUserForFederalTax = roundToCents(
+  const sharedDependentsAllowance =
+    allowance.dependentsAllowance +
+    allowance.youngChildrenAllowance +
+    allowance.otherDependentsAllowance
+  const sharedPerPartner = ippAllowanceSharePerPartner(hasPartner, sharedDependentsAllowance)
+
+  const allowanceUser = roundToCents(
+    clampNonNegative(
+      allowance.baseAllowanceSelf + allowance.ageAllowanceSelf + sharedPerPartner
+    )
+  )
+  const allowancePartner = roundToCents(
+    clampNonNegative(allowance.baseAllowancePartner + (hasPartner ? sharedPerPartner : 0))
+  )
+
+  // After marital quotient, other income stacks on the user; then subtract tax-free allowances.
+  const baseIncomeUserBeforeAllowance = roundToCents(
     clampNonNegative(maritalQuotient.after.userIncome + clampNonNegative(values.otherIncome))
   )
-  const baseIncomePartnerForFederalTax = roundToCents(
+  const baseIncomePartnerBeforeAllowance = roundToCents(
     clampNonNegative(maritalQuotient.after.partnerIncome)
   )
 
-  const federalGrossTaxUser = computeFederalTax({ taxableIncome: baseIncomeUserForFederalTax })
+  const taxableIncomeUser = roundToCents(
+    clampNonNegative(baseIncomeUserBeforeAllowance - allowanceUser)
+  )
+  const taxableIncomePartner = roundToCents(
+    clampNonNegative(baseIncomePartnerBeforeAllowance - allowancePartner)
+  )
+
+  // 5–6. Brackets on post-allowance taxable income, then municipal surcharge on federal tax
+  const federalGrossTaxUser = computeFederalTax({ taxableIncome: taxableIncomeUser })
   const federalGrossTaxPartner = computeFederalTax({
-    taxableIncome: baseIncomePartnerForFederalTax,
+    taxableIncome: taxableIncomePartner,
   })
   const federalGrossTaxTotal = roundToCents(
     federalGrossTaxUser.total + federalGrossTaxPartner.total
   )
 
-  const federalTaxReductionFromAllowances = roundToCents(allowance.totalAllowanceHousehold * 0.25)
-  const federalTaxTotal = roundToCents(
-    clampNonNegative(federalGrossTaxTotal - federalTaxReductionFromAllowances)
-  )
+  const federalTaxReductionFromAllowances = 0
+  const federalTaxTotal = federalGrossTaxTotal
 
   const { rate: municipalRate } = resolveMunicipalRate({
     municipality: values.municipality,
@@ -94,18 +142,6 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   }
 
   const taxTotalIncludingMunicipal = roundToCents(federalTaxTotal + municipalSurchargeAmount)
-
-  const socialContributions = computeSocialContributions({
-    status: values.selfEmployedStatus,
-    annualNetIncome:
-      clampNonNegative(estimatedAnnualProfessionalIncome) -
-      clampNonNegative(values.estimatedProfessionalExpenses),
-    overrideAnnualAmount: values.isSocialContributionsExempt
-      ? 0
-      : values.currentQuarterlySocialContribution > 0
-        ? values.currentQuarterlySocialContribution * 4
-        : values.socialContributionsOverride,
-  })
 
   const advanceTaxPayments = roundToCents(clampNonNegative(values.advanceTaxPayments))
 
@@ -136,7 +172,8 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     partnerIncome,
     vatRegime: values.vatRegime,
     salariedIncome: roundToCents(clampNonNegative(salariedIncome)),
-    selfEmployedProfit: roundToCents(clampNonNegative(estimatedAnnualProfessionalIncome)),
+    selfEmployedProfit,
+    selfEmployedNetForIpp,
     otherIncome: roundToCents(clampNonNegative(values.otherIncome)),
     childrenCount: values.children?.length ?? 0,
     otherDependentsCount,

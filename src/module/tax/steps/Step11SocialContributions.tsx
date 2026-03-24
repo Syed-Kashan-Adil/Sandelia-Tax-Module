@@ -12,6 +12,7 @@ export function Step11SocialContributions() {
   const values = useTaxOnboardingStore((s) => s.values)
   const annualExpenses = useTaxOnboardingStore((s) => s.values.estimatedProfessionalExpenses)
   const isExempt = useTaxOnboardingStore((s) => s.values.isSocialContributionsExempt)
+  const studentSocialExemption = useTaxOnboardingStore((s) => s.values.studentSocialExemption)
   const fund = useTaxOnboardingStore((s) => s.values.socialInsuranceFund)
   const currentQuarterly = useTaxOnboardingStore((s) => s.values.currentQuarterlySocialContribution)
   const setValues = useTaxOnboardingStore((s) => s.setValues)
@@ -36,12 +37,34 @@ export function Step11SocialContributions() {
         status,
         annualNetIncome: netIncome,
         overrideAnnualAmount,
+        socialInsuranceFund: fund,
+        studentSocialExemption,
       }),
-    [status, netIncome, overrideAnnualAmount]
+    [status, netIncome, overrideAnnualAmount, fund, studentSocialExemption]
   )
 
   return (
     <div className="space-y-6">
+      {status === 'student' ? (
+        <Field
+          label="Student: exemption from provisional contribution (zone 1)?"
+          hint="If exempt, zone 1 income uses €0 provisional contribution instead of the minimum base."
+        >
+          <div className="flex gap-4">
+            <ToggleOption
+              label="Exempt"
+              checked={studentSocialExemption}
+              onChange={() => setValues({ studentSocialExemption: true })}
+            />
+            <ToggleOption
+              label="Not exempt (provisional minimum applies)"
+              checked={!studentSocialExemption}
+              onChange={() => setValues({ studentSocialExemption: false })}
+            />
+          </div>
+        </Field>
+      ) : null}
+
       <Field label="Are you exempt from paying social contributions?">
         <div className="flex gap-4">
           <ToggleOption
@@ -138,6 +161,13 @@ export function Step11SocialContributions() {
         </div>
         <div className="mt-2 text-xs text-muted-foreground">
           If you entered a current quarterly payment, it is used as an override (quarterly × 4).
+          {calculated.method === 'calculated' ? (
+            <>
+              {' '}
+              Legal annual (before {fund} fee): €{calculated.legalAnnualBeforeFees.toFixed(2)}; fee{' '}
+              {(calculated.fundFeeRate * 100).toFixed(2)}%.
+            </>
+          ) : null}
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ function eur(n: number): string {
 export function Step14TaxSummary(props: { summary: TaxSummary }) {
   const s = props.summary
 
-  const totalTaxableIncome = s.salariedIncome + s.selfEmployedProfit + s.otherIncome
+  const totalIncomeComponents = s.salariedIncome + s.selfEmployedProfit + s.otherIncome
   const totalToSpread = s.finalBalance > 0 ? s.finalBalance + s.socialContributions.annualAmount : 0
 
   const quarterlyRecommendation = totalToSpread > 0 ? Math.round(totalToSpread / 4) : 0
@@ -37,18 +37,29 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
             <SummaryRow label="Salaried income" value={eur(s.salariedIncome)} />
           ) : null}
           {s.selfEmployedProfit > 0 ? (
-            <SummaryRow label="Self-employed profit" value={eur(s.selfEmployedProfit)} />
+            <SummaryRow
+              label="Self-employed profit (after professional expenses)"
+              value={eur(s.selfEmployedProfit)}
+            />
+          ) : null}
+          {s.selfEmployedNetForIpp > 0 ? (
+            <SummaryRow
+              label="Self-employed net for IPP (after social contributions)"
+              value={eur(s.selfEmployedNetForIpp)}
+            />
           ) : null}
           {s.otherIncome > 0 ? (
             <SummaryRow label="Other income" value={eur(s.otherIncome)} />
           ) : null}
           {s.salariedIncome === 0 && s.selfEmployedProfit === 0 && s.otherIncome === 0 ? (
-            <SummaryRow label="Total taxable income" value={eur(0)} highlight />
+            <SummaryRow label="Total income components" value={eur(0)} highlight />
           ) : (
             <div className="flex items-center justify-between border-t border-border pt-3">
-              <span className="font-medium text-foreground">Total taxable income</span>
+              <span className="font-medium text-foreground">
+                Total income components (salary + profit + other)
+              </span>
               <span className="font-semibold text-green-600 dark:text-green-400">
-                {eur(totalTaxableIncome)}
+                {eur(totalIncomeComponents)}
               </span>
             </div>
           )}
@@ -66,6 +77,15 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
           <div className="flex items-start justify-between gap-4 text-xs text-muted-foreground">
             <span className="max-w-[70%]">
               Social base (annual net income): {eur(s.socialContributions.baseIncome)}
+              {s.socialContributions.method === 'calculated' ? (
+                <>
+                  {' '}
+                  · Legal annual before fund fee: {eur(
+                    s.socialContributions.legalAnnualBeforeFees
+                  )}{' '}
+                  ({(s.socialContributions.fundFeeRate * 100).toFixed(2)}% fee)
+                </>
+              ) : null}
             </span>
             <span className="shrink-0">
               {s.socialContributions.method === 'override' ? 'Override' : 'Calculated'}
@@ -84,18 +104,17 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
             <div className="text-xs font-semibold text-foreground">Federal tax (detail)</div>
             <div className="mt-2 space-y-1 text-xs text-muted-foreground">
               <div className="flex items-center justify-between gap-4">
-                <span>Gross federal tax (before 25% allowance reduction)</span>
+                <span>Federal IPP (2026 brackets on taxable income after allowances)</span>
                 <span className="font-medium text-foreground">{eur(s.federalGrossTaxTotal)}</span>
               </div>
-              <div className="flex items-center justify-between gap-4">
-                <span>
-                  Tax-free allowance reduction ({' '}
-                  <span className="font-medium text-foreground">25%</span>)
-                </span>
-                <span className="font-medium text-foreground">
-                  -{eur(s.federalTaxReductionFromAllowances)}
-                </span>
-              </div>
+              {s.federalTaxReductionFromAllowances > 0 ? (
+                <div className="flex items-center justify-between gap-4">
+                  <span>Additional allowance reduction (legacy)</span>
+                  <span className="font-medium text-foreground">
+                    -{eur(s.federalTaxReductionFromAllowances)}
+                  </span>
+                </div>
+              ) : null}
               <div className="flex items-center justify-between gap-4 border-t border-border pt-2">
                 <span className="font-medium text-foreground">Federal tax total</span>
                 <span className="font-semibold text-foreground">{eur(s.federalTaxTotal)}</span>
@@ -177,8 +196,9 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
               strong
             />
             <div className="mt-1 text-xs text-muted-foreground">
-              Federal tax reduction ={' '}
-              <span className="font-medium text-foreground">totalAllowance × 25%</span>
+              These amounts are{' '}
+              <span className="font-medium text-foreground">deducted from taxable income</span>{' '}
+              before applying IPP brackets (split between partners where applicable).
             </div>
           </div>
         </details>
@@ -234,11 +254,11 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
 
           <div className="mt-3 grid gap-4 lg:grid-cols-2">
             <BracketTable
-              title={`User — taxable income ${eur(s.federalGrossTaxUser.taxableIncome)}`}
+              title={`User — taxable income (after allowances) ${eur(s.federalGrossTaxUser.taxableIncome)}`}
               brackets={s.federalGrossTaxUser.brackets}
             />
             <BracketTable
-              title={`Partner — taxable income ${eur(s.federalGrossTaxPartner.taxableIncome)}`}
+              title={`Partner — taxable income (after allowances) ${eur(s.federalGrossTaxPartner.taxableIncome)}`}
               brackets={s.federalGrossTaxPartner.brackets}
             />
           </div>
