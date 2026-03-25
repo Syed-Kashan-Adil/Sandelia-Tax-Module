@@ -104,12 +104,12 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
             <div className="text-xs font-semibold text-foreground">Federal tax (detail)</div>
             <div className="mt-2 space-y-1 text-xs text-muted-foreground">
               <div className="flex items-center justify-between gap-4">
-                <span>Federal IPP (2026 brackets on taxable income after allowances)</span>
+                <span>Federal IPP (2026 brackets on taxable income after marital quotient)</span>
                 <span className="font-medium text-foreground">{eur(s.federalGrossTaxTotal)}</span>
               </div>
               {s.federalTaxReductionFromAllowances > 0 ? (
                 <div className="flex items-center justify-between gap-4">
-                  <span>Additional allowance reduction (legacy)</span>
+                  <span>Tax-free allowance reduction (25%)</span>
                   <span className="font-medium text-foreground">
                     -{eur(s.federalTaxReductionFromAllowances)}
                   </span>
@@ -144,6 +144,11 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
             value={eur(-s.advanceTaxPayments)}
             highlight={s.advanceTaxPayments > 0}
             highlightGreen
+          />
+          <SummaryRow
+            label="Advance payment penalty"
+            value={eur(s.advancePaymentPenalty)}
+            highlight={s.advancePaymentPenalty > 0}
           />
           <div className="flex items-center justify-between border-t border-border pt-3">
             <span className="font-medium text-foreground">Estimated balance due</span>
@@ -197,8 +202,8 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
             />
             <div className="mt-1 text-xs text-muted-foreground">
               These amounts are{' '}
-              <span className="font-medium text-foreground">deducted from taxable income</span>{' '}
-              before applying IPP brackets (split between partners where applicable).
+              <span className="font-medium text-foreground">converted into a tax reduction</span>{' '}
+              equal to <span className="font-medium text-foreground">totalAllowance × 25%</span>.
             </div>
           </div>
         </details>
@@ -254,11 +259,11 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
 
           <div className="mt-3 grid gap-4 lg:grid-cols-2">
             <BracketTable
-              title={`User — taxable income (after allowances) ${eur(s.federalGrossTaxUser.taxableIncome)}`}
+              title={`User — taxable income ${eur(s.federalGrossTaxUser.taxableIncome)}`}
               brackets={s.federalGrossTaxUser.brackets}
             />
             <BracketTable
-              title={`Partner — taxable income (after allowances) ${eur(s.federalGrossTaxPartner.taxableIncome)}`}
+              title={`Partner — taxable income ${eur(s.federalGrossTaxPartner.taxableIncome)}`}
               brackets={s.federalGrossTaxPartner.brackets}
             />
           </div>

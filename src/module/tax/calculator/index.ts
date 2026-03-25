@@ -8,11 +8,6 @@ import { clampNonNegative, roundToCents } from './money'
 import { computeEstimatedAnnualProfessionalIncome } from './profitEstimation'
 import { computeSocialContributions } from './socialContributions'
 
-/** Shared household allowances (children, young children, other dependents) split across taxpayers */
-function ippAllowanceSharePerPartner(hasPartner: boolean, allowance: number): number {
-  return roundToCents(hasPartner ? allowance / 2 : allowance)
-}
-
 export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const salariedIncome = values.hasSalariedIncome ? values.salariedIncome : 0
   const withholdingTax = values.hasSalariedIncome
@@ -87,22 +82,7 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     userDateOfBirthIso: values.dateOfBirth,
   })
 
-  const sharedDependentsAllowance =
-    allowance.dependentsAllowance +
-    allowance.youngChildrenAllowance +
-    allowance.otherDependentsAllowance
-  const sharedPerPartner = ippAllowanceSharePerPartner(hasPartner, sharedDependentsAllowance)
-
-  const allowanceUser = roundToCents(
-    clampNonNegative(
-      allowance.baseAllowanceSelf + allowance.ageAllowanceSelf + sharedPerPartner
-    )
-  )
-  const allowancePartner = roundToCents(
-    clampNonNegative(allowance.baseAllowancePartner + (hasPartner ? sharedPerPartner : 0))
-  )
-
-  // After marital quotient, other income stacks on the user; then subtract tax-free allowances.
+  // After marital quotient, other income stacks on the user.
   const baseIncomeUserBeforeAllowance = roundToCents(
     clampNonNegative(maritalQuotient.after.userIncome + clampNonNegative(values.otherIncome))
   )
@@ -110,24 +90,21 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     clampNonNegative(maritalQuotient.after.partnerIncome)
   )
 
-  const taxableIncomeUser = roundToCents(
-    clampNonNegative(baseIncomeUserBeforeAllowance - allowanceUser)
-  )
-  const taxableIncomePartner = roundToCents(
-    clampNonNegative(baseIncomePartnerBeforeAllowance - allowancePartner)
-  )
-
-  // 5–6. Brackets on post-allowance taxable income, then municipal surcharge on federal tax
-  const federalGrossTaxUser = computeFederalTax({ taxableIncome: taxableIncomeUser })
+  // 5–6. Brackets on income, then apply the tax-free allowance as a tax reduction.
+  const federalGrossTaxUser = computeFederalTax({ taxableIncome: baseIncomeUserBeforeAllowance })
   const federalGrossTaxPartner = computeFederalTax({
-    taxableIncome: taxableIncomePartner,
+    taxableIncome: baseIncomePartnerBeforeAllowance,
   })
   const federalGrossTaxTotal = roundToCents(
     federalGrossTaxUser.total + federalGrossTaxPartner.total
   )
 
-  const federalTaxReductionFromAllowances = 0
-  const federalTaxTotal = federalGrossTaxTotal
+  // Belgian IPP: the tax-free allowance is NOT deducted from bracket base.
+  // It's applied as a tax reduction equal to allowance × 25%.
+  const federalTaxReductionFromAllowances = roundToCents(allowance.totalAllowanceHousehold * 0.25)
+  const federalTaxTotal = roundToCents(
+    clampNonNegative(federalGrossTaxTotal - federalTaxReductionFromAllowances)
+  )
 
   const { rate: municipalRate } = resolveMunicipalRate({
     municipality: values.municipality,
@@ -145,8 +122,64 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
 
   const advanceTaxPayments = roundToCents(clampNonNegative(values.advanceTaxPayments))
 
+  const isStarterSelfEmployed = (() => {
+    const assessmentYear = IPP_2026.assessmentYear ?? new Date().getFullYear()
+    const start = new Date(values.activityStartDate)
+    if (Number.isNaN(start.getTime())) return false
+    const end = new Date(`${assessmentYear}-12-31T00:00:00`)
+    if (Number.isNaN(end.getTime())) return false
+    const diffMonths =
+      (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth())
+    return diffMonths < 36 // first 3 years
+  })()
+
+  // Advance payment penalty interest (self-employed only).
+  // Uses annual advance payments and assumes a simplified quarter distribution based on mode.
+  let advancePaymentPenalty = 0
+  if (
+    values.taxSubject === 'self-employed' &&
+    !isStarterSelfEmployed &&
+    taxTotalIncludingMunicipal >= 1000
+  ) {
+    const taxTotal = taxTotalIncludingMunicipal
+    const penaltyBase = taxTotal * 1.06
+    const penaltyGross = penaltyBase * 0.0675
+
+    const annualAdv = advanceTaxPayments
+    const mode = values.advanceTaxPaymentsMode
+
+    let vaQ1 = 0
+    let vaQ2 = 0
+    let vaQ3 = 0
+    let vaQ4 = 0
+
+    if (annualAdv > 0) {
+      if (mode === 'spread') {
+        const q = annualAdv / 4
+        vaQ1 = roundToCents(q)
+        vaQ2 = roundToCents(q)
+        vaQ3 = roundToCents(q)
+        vaQ4 = roundToCents(q)
+        // Keep exact sum by adjusting the first quarter.
+        const diff = roundToCents(annualAdv - (vaQ1 + vaQ2 + vaQ3 + vaQ4))
+        vaQ1 = roundToCents(vaQ1 + diff)
+      } else if (mode === 'optimize') {
+        // Simplification: pay everything as early as possible (best-case reduction).
+        vaQ1 = annualAdv
+      } else {
+        // 'none': worst-case assumption for unstructured input (last quarter).
+        vaQ4 = annualAdv
+      }
+    }
+
+    const reduction = vaQ1 * 0.09 + vaQ2 * 0.075 + vaQ3 * 0.06 + vaQ4 * 0.045
+
+    const penaltyUnrounded = Math.max(0, penaltyGross - reduction) * 0.9
+    advancePaymentPenalty = roundToCents(penaltyUnrounded)
+  }
+
   const finalBalance = roundToCents(
-    taxTotalIncludingMunicipal - withholdingTax - advanceTaxPayments
+    taxTotalIncludingMunicipal + advancePaymentPenalty - withholdingTax - advanceTaxPayments
   )
 
   const otherDependents = values.otherDependents ?? {
@@ -189,6 +222,7 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     socialContributions,
     withholdingTax: roundToCents(clampNonNegative(withholdingTax)),
     advanceTaxPayments,
+    advancePaymentPenalty,
     finalBalance,
   }
 }

@@ -196,5 +196,8 @@ export interface TaxSummary {
   withholdingTax: number
   advanceTaxPayments: number
 
+  /** Advance payment penalty interest (self-employed) */
+  advancePaymentPenalty: number
+
   finalBalance: number
 }
