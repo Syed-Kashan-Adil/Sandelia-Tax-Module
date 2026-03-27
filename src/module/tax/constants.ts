@@ -2,7 +2,7 @@ export const IPP_2026 = {
   baseTaxFreeAllowance: 10910,
   professionalExpenses: {
     // Document example (employee professional expenses lump sum)
-    employeeLumpSum: 5930,
+    employeeLumpSum: 5750,
   },
   maritalQuotient: {
     transferRate: 0.3,
@@ -10,26 +10,28 @@ export const IPP_2026 = {
     eligibleStatuses: ['married', 'legally-cohabiting'] as const,
   },
   federalBrackets: [
-    { from: 0, to: 16720, rate: 0.25 },
-    { from: 16720, to: 29510, rate: 0.4 },
-    { from: 29510, to: 51070, rate: 0.45 },
+    { from: 0, to: 16320, rate: 0.25 },
+    { from: 16320, to: 28800, rate: 0.4 },
+    { from: 28800, to: 51070, rate: 0.45 },
     { from: 51070, to: null, rate: 0.5 },
   ] as const,
   dependentsAllowance: {
-    oneChild: 1920,
-    twoChildren: 4950,
+    oneChild: 1980,
+    twoChildren: 5110,
     threeChildren: 11090,
     fourChildren: 17940,
     extraPerChildBeyondFour: 6850,
     // For each child under 3 on 1 January of the assessment year (additional increase)
     youngChildAgeThreshold: 3,
-    youngChildAdditionalAllowance: 720,
+    youngChildAdditionalAllowance: 740,
+    // Single parent with at least one dependent child.
+    singleParentWithDependentChild: 1980,
     otherDependents: {
       age65InDependency: 5770,
       age65SevereDisabilityRequiringCareDependentIn2021: 7700,
       age65NotRequiringCareDependentIn2021: 3850,
       age65NotRequiringCareDependentIn2021SevereDisability: 7700,
-      other: 1920,
+      other: 1980,
       otherSevereDisability: 3840,
     },
   },

@@ -3,10 +3,10 @@ export const MUNICIPAL_SURCHARGE_RATES: Record<string, number> = {
   overijse: 0.073,
 
   // A few common municipalities (illustrative). Extend with your real table/API.
-  brussels: 0.07,
-  antwerp: 0.075,
-  gent: 0.075,
-  leuven: 0.075,
+  brussels: 0.073,
+  antwerp: 0.073,
+  gent: 0.073,
+  leuven: 0.073,
 }
 
 export function normalizeMunicipalityName(input: string): string {
@@ -26,5 +26,5 @@ export function resolveMunicipalRate(params: { municipality: string; override: n
   if (typeof rate === 'number') return { rate, source: 'lookup' }
 
   // Reasonable fallback so the summary can still compute; UI will surface that it's a default.
-  return { rate: 0.07, source: 'default' }
+  return { rate: 0.073, source: 'default' }
 }

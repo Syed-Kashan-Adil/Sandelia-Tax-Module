@@ -143,6 +143,7 @@ export interface AllowanceBreakdown {
   baseAllowancePartner: number
   dependentsAllowance: number
   youngChildrenAllowance: number
+  singleParentAllowance: number
   otherDependentsAllowance: number
   ageAllowanceSelf: number
   totalAllowanceHousehold: number

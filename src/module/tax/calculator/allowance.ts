@@ -89,6 +89,10 @@ export function computeHouseholdAllowance(params: {
   const baseAllowancePartner = params.hasPartner ? IPP_2026.baseTaxFreeAllowance : 0
   const dependentsAllowance = computeDependentsAllowance(params.children)
   const youngChildrenAllowance = computeYoungChildrenAllowance(params.children, assessmentYear)
+  const singleParentAllowance =
+    !params.hasPartner && params.children.length > 0
+      ? (IPP_2026.dependentsAllowance.singleParentWithDependentChild ?? 0)
+      : 0
   const otherDependentsAllowance = computeOtherDependentsAllowance(params.otherDependents)
   const ageAllowanceSelf = computeAgeAllowance(params.userDateOfBirthIso)
 
@@ -98,6 +102,7 @@ export function computeHouseholdAllowance(params: {
         baseAllowancePartner +
         dependentsAllowance +
         youngChildrenAllowance +
+        singleParentAllowance +
         otherDependentsAllowance +
         ageAllowanceSelf
     )
@@ -108,6 +113,7 @@ export function computeHouseholdAllowance(params: {
     baseAllowancePartner,
     dependentsAllowance,
     youngChildrenAllowance,
+    singleParentAllowance,
     otherDependentsAllowance,
     ageAllowanceSelf,
     totalAllowanceHousehold,

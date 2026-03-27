@@ -99,9 +99,11 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     federalGrossTaxUser.total + federalGrossTaxPartner.total
   )
 
-  // Belgian IPP: the tax-free allowance is NOT deducted from bracket base.
-  // It's applied as a tax reduction equal to allowance × 25%.
-  const federalTaxReductionFromAllowances = roundToCents(allowance.totalAllowanceHousehold * 0.25)
+  // Tax-free allowance reduction is computed on bracket layers (not flat 25%).
+  // Example: 16,320 @25% then remainder @40%, etc.
+  const federalTaxReductionFromAllowances = roundToCents(
+    computeFederalTax({ taxableIncome: allowance.totalAllowanceHousehold }).total
+  )
   const federalTaxTotal = roundToCents(
     clampNonNegative(federalGrossTaxTotal - federalTaxReductionFromAllowances)
   )
