@@ -24,6 +24,14 @@ export interface DependentChildInput {
   isDisabled: boolean;
 }
 
+export interface CompanyDirectorInput {
+  id: string;
+  name: string;
+  monthlySalary: number;
+  expectedDividend: number;
+  socialContributionOverrideAnnual: number | null;
+}
+
 export interface TaxOnboardingValues {
   // Step 1
   taxSubject: TaxSubject;
@@ -120,6 +128,27 @@ export interface TaxOnboardingValues {
     otherProfessional: { enabled: boolean; annualAmount: number };
   };
   otherIncome: number;
+
+  // Company flow
+  companyRevenue: number;
+  companyExpenses: number;
+  companyDna: number;
+  companyCarriedForwardLoss: number;
+  companyFiscalYearEndDate: string;
+  companyTaxRegime: "sme-reduced" | "standard";
+  companyEstimatedTaxableProfitMode: "manual" | "detailed";
+  companyEstimatedTaxableProfit: number;
+  companyIsSme: boolean;
+  companyDirectorRemunerationEligible: boolean;
+  companyIsFinancialCompany: boolean;
+  companyAgeYears: number;
+  companyAdvancePayments: {
+    vai1: number;
+    vai2: number;
+    vai3: number;
+    vai4: number;
+  };
+  companyDirectors: CompanyDirectorInput[];
 }
 
 export interface SocialContributionsBreakdown {
@@ -213,4 +242,33 @@ export interface TaxSummary {
   advancePaymentPenalty: number;
 
   finalBalance: number;
+}
+
+export interface CompanySocialContributionBreakdown {
+  directorId: string;
+  directorName: string;
+  annualIncomeBase: number;
+  annualContribution: number;
+  quarterlyContribution: number;
+}
+
+export interface CompanyTaxSummary {
+  accountingResult: number;
+  taxResultBeforeLosses: number;
+  carriedForwardLossUsed: number;
+  carriedForwardLossRemaining: number;
+  taxableProfit: number;
+  reducedRateEligible: boolean;
+  isocAt20: number;
+  isocAt25: number;
+  grossIsoc: number;
+  theoreticalIncrease: number;
+  vaiReductionCredit: number;
+  finalIncrease: number;
+  totalTaxBeforeAdvanceDeduction: number;
+  advancePaymentsTotal: number;
+  finalTaxPayable: number;
+  noIncreaseReason: string | null;
+  directorsSocial: CompanySocialContributionBreakdown[];
+  totalDirectorsSocialContribution: number;
 }

@@ -13,9 +13,12 @@ export function shouldApplyCsss(values: TaxOnboardingValues): boolean {
   const isJoint =
     values.maritalStatus === "married" ||
     values.maritalStatus === "legally-cohabiting";
+  const hasSelfEmployedProfessionalIncome =
+    clampNonNegative(values.estimatedSelfEmployedProfit) > 0;
 
   return (
     values.hasSalariedIncome ||
+    hasSelfEmployedProfessionalIncome ||
     values.taxSubject === "company" ||
     (isJoint && clampNonNegative(values.partnerIncome) > 0)
   );

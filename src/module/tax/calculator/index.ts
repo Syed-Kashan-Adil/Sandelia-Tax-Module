@@ -2,6 +2,7 @@ import { IPP_2026 } from "../constants";
 import { resolveMunicipalRate } from "../municipalRates";
 import type { TaxOnboardingValues, TaxSummary } from "../types";
 import { computeHouseholdAllowance } from "./allowance";
+import { calculateCompanyTaxSummary } from "./companySummary";
 import { computeCsss, shouldApplyCsss } from "./csss";
 import { computeFederalTax } from "./federalTax";
 import { applyMaritalQuotient } from "./maritalQuotient";
@@ -11,11 +12,8 @@ import { computeSocialContributions } from "./socialContributions";
 
 export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const salariedIncome = values.hasSalariedIncome ? values.salariedIncome : 0;
-  const withholdingTax = values.hasSalariedIncome
-    ? values.withholdingTaxMode === "unknown"
-      ? 0
-      : values.withholdingTax
-    : 0;
+  const withholdingTax =
+    values.withholdingTaxMode === "unknown" ? 0 : values.withholdingTax;
 
   const lumpSum =
     values.hasSalariedIncome && values.applyEmployeeProfessionalExpensesLumpSum
@@ -270,3 +268,5 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     finalBalance,
   };
 }
+
+export { calculateCompanyTaxSummary };

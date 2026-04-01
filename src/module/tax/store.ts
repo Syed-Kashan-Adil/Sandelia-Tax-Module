@@ -1,37 +1,43 @@
-import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { DependentChildInput, TaxOnboardingValues } from './types'
+import type {
+  CompanyDirectorInput,
+  DependentChildInput,
+  TaxOnboardingValues,
+} from "./types";
 
-export const TAX_WIZARD_TOTAL_STEPS = 15
+export const TAX_WIZARD_TOTAL_STEPS = 15;
 
 export interface TaxOnboardingState {
-  step: number
-  values: TaxOnboardingValues
-  setValues: (partial: Partial<TaxOnboardingValues>) => void
-  goNext: () => void
-  goBack: () => void
-  goTo: (step: number) => void
-  reset: () => void
-  addChild: (child?: Partial<DependentChildInput>) => void
-  removeChild: (id: string) => void
+  step: number;
+  values: TaxOnboardingValues;
+  setValues: (partial: Partial<TaxOnboardingValues>) => void;
+  goNext: () => void;
+  goBack: () => void;
+  goTo: (step: number) => void;
+  reset: () => void;
+  addChild: (child?: Partial<DependentChildInput>) => void;
+  removeChild: (id: string) => void;
+  addCompanyDirector: (director?: Partial<CompanyDirectorInput>) => void;
+  removeCompanyDirector: (id: string) => void;
 }
 
 function todayIsoDate(): string {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 export const defaultTaxOnboardingValues: TaxOnboardingValues = {
-  taxSubject: 'self-employed',
-  selfEmployedStatus: 'main',
+  taxSubject: "self-employed",
+  selfEmployedStatus: "main",
   activityStartDate: todayIsoDate(),
-  activityType: 'commercial',
-  vatRegime: 'yes-quarterly',
-  maritalStatus: 'single',
+  activityType: "commercial",
+  vatRegime: "yes-quarterly",
+  maritalStatus: "single",
   partnerIncome: 0,
   children: [],
   otherDependents: {
@@ -41,27 +47,27 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
     age65NotRequiringCareDependentIn2021SevereDisabilityCount: 0,
     otherCount: 0,
     otherSevereDisabilityCount: 0,
-    description: '',
+    description: "",
   },
-  dateOfBirth: '1990-01-01',
-  municipality: '',
+  dateOfBirth: "1990-01-01",
+  municipality: "",
   municipalityRateOverride: null,
   hasSalariedIncome: false,
   salariedIncome: 0,
   withholdingTax: 0,
-  withholdingTaxMode: 'known',
+  withholdingTaxMode: "known",
   applyEmployeeProfessionalExpensesLumpSum: true,
   employeeProfessionalExpensesLumpSumOverride: null,
-  profitEstimationMode: 'manual',
+  profitEstimationMode: "manual",
   estimatedSelfEmployedProfit: 0,
   estimatedProfessionalExpenses: 0,
   ytdProfessionalIncome: 0,
   isSocialContributionsExempt: false,
-  socialInsuranceFund: 'partena',
+  socialInsuranceFund: "partena",
   currentQuarterlySocialContribution: 0,
   socialContributionsOverride: null,
   studentSocialExemption: false,
-  advanceTaxPaymentsMode: 'none',
+  advanceTaxPaymentsMode: "none",
   advanceTaxPayments: 0,
   otherIncomeSources: {
     rental: { enabled: false, annualAmount: 0 },
@@ -71,7 +77,26 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
     otherProfessional: { enabled: false, annualAmount: 0 },
   },
   otherIncome: 0,
-}
+  companyRevenue: 0,
+  companyExpenses: 0,
+  companyDna: 0,
+  companyCarriedForwardLoss: 0,
+  companyFiscalYearEndDate: todayIsoDate(),
+  companyTaxRegime: "sme-reduced",
+  companyEstimatedTaxableProfitMode: "manual",
+  companyEstimatedTaxableProfit: 0,
+  companyIsSme: true,
+  companyDirectorRemunerationEligible: true,
+  companyIsFinancialCompany: false,
+  companyAgeYears: 0,
+  companyAdvancePayments: {
+    vai1: 0,
+    vai2: 0,
+    vai3: 0,
+    vai4: 0,
+  },
+  companyDirectors: [],
+};
 
 export const useTaxOnboardingStore = create<TaxOnboardingState>()(
   persist(
@@ -108,40 +133,91 @@ export const useTaxOnboardingStore = create<TaxOnboardingState>()(
       addChild: (child) =>
         set((state) => {
           const generatedId =
-            typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            typeof crypto !== "undefined" && "randomUUID" in crypto
               ? crypto.randomUUID()
-              : String(Date.now())
+              : String(Date.now());
           const newChild: DependentChildInput = {
             dateOfBirth: todayIsoDate(),
             isDisabled: false,
             ...child,
             id: child?.id ?? generatedId,
-          }
-          return { values: { ...state.values, children: [...state.values.children, newChild] } }
+          };
+          return {
+            values: {
+              ...state.values,
+              children: [...state.values.children, newChild],
+            },
+          };
         }),
 
       removeChild: (id) =>
         set((state) => ({
-          values: { ...state.values, children: state.values.children.filter((c) => c.id !== id) },
+          values: {
+            ...state.values,
+            children: state.values.children.filter((c) => c.id !== id),
+          },
+        })),
+
+      addCompanyDirector: (director) =>
+        set((state) => {
+          const generatedId =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? crypto.randomUUID()
+              : String(Date.now());
+          const newDirector: CompanyDirectorInput = {
+            id: director?.id ?? generatedId,
+            name: director?.name ?? "",
+            monthlySalary: director?.monthlySalary ?? 0,
+            expectedDividend: director?.expectedDividend ?? 0,
+            socialContributionOverrideAnnual:
+              director?.socialContributionOverrideAnnual ?? null,
+          };
+          return {
+            values: {
+              ...state.values,
+              companyDirectors: [...state.values.companyDirectors, newDirector],
+            },
+          };
+        }),
+
+      removeCompanyDirector: (id) =>
+        set((state) => ({
+          values: {
+            ...state.values,
+            companyDirectors: state.values.companyDirectors.filter(
+              (director) => director.id !== id,
+            ),
+          },
         })),
     }),
     {
-      name: 'tax-onboarding-storage',
+      name: "tax-onboarding-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ step: state.step, values: state.values }),
       merge: (persisted, current) => {
-        const p = persisted as { step?: number; values?: Partial<TaxOnboardingValues> } | undefined
-        const c = current as TaxOnboardingState
-        if (!p?.values) return { ...c, ...p } as TaxOnboardingState
+        const p = persisted as
+          | { step?: number; values?: Partial<TaxOnboardingValues> }
+          | undefined;
+        const c = current as TaxOnboardingState;
+        if (!p?.values) return { ...c, ...p } as TaxOnboardingState;
         const values: TaxOnboardingValues = {
           ...defaultTaxOnboardingValues,
           ...p.values,
-          otherDependents: p.values.otherDependents ?? defaultTaxOnboardingValues.otherDependents,
+          otherDependents:
+            p.values.otherDependents ??
+            defaultTaxOnboardingValues.otherDependents,
           studentSocialExemption:
-            p.values.studentSocialExemption ?? defaultTaxOnboardingValues.studentSocialExemption,
-        }
-        return { ...c, step: p.step ?? c.step, values } as TaxOnboardingState
+            p.values.studentSocialExemption ??
+            defaultTaxOnboardingValues.studentSocialExemption,
+          companyAdvancePayments:
+            p.values.companyAdvancePayments ??
+            defaultTaxOnboardingValues.companyAdvancePayments,
+          companyDirectors:
+            p.values.companyDirectors ??
+            defaultTaxOnboardingValues.companyDirectors,
+        };
+        return { ...c, step: p.step ?? c.step, values } as TaxOnboardingState;
       },
-    }
-  )
-)
+    },
+  ),
+);
