@@ -33,6 +33,47 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     clampNonNegative(clampNonNegative(salariedIncome) - lumpSum),
   );
 
+  const partnerSalariedIncome = values.partnerHasSalariedIncome
+    ? values.partnerSalariedIncome
+    : 0;
+  const partnerLumpSum =
+    values.partnerHasSalariedIncome &&
+    values.partnerApplyEmployeeProfessionalExpensesLumpSum
+      ? roundToCents(
+          clampNonNegative(
+            typeof values.partnerEmployeeProfessionalExpensesLumpSumOverride ===
+              "number"
+              ? values.partnerEmployeeProfessionalExpensesLumpSumOverride
+              : IPP_2026.professionalExpenses.employeeLumpSum,
+          ),
+        )
+      : 0;
+  const partnerSalaryAfterExpenses = roundToCents(
+    clampNonNegative(clampNonNegative(partnerSalariedIncome) - partnerLumpSum),
+  );
+  const partnerWithholdingTax = values.partnerHasSalariedIncome
+    ? values.partnerWithholdingTaxMode === "unknown"
+      ? 0
+      : values.partnerWithholdingTax
+    : 0;
+
+  const partnerSelfEmployedGross = values.partnerHasSelfEmployedIncome
+    ? roundToCents(clampNonNegative(values.partnerEstimatedSelfEmployedIncome))
+    : 0;
+  const partnerSelfEmployedExpenses = values.partnerHasSelfEmployedIncome
+    ? roundToCents(clampNonNegative(values.partnerEstimatedProfessionalExpenses))
+    : 0;
+  const partnerSelfEmployedSocialContributions = values.partnerHasSelfEmployedIncome
+    ? roundToCents(clampNonNegative(values.partnerSocialContributionsAnnual))
+    : 0;
+  const partnerSelfEmployedNetForIpp = roundToCents(
+    clampNonNegative(
+      partnerSelfEmployedGross -
+        partnerSelfEmployedExpenses -
+        partnerSelfEmployedSocialContributions,
+    ),
+  );
+
   // 1. Professional income: turnover (or YTD extrapolation / manual entry) − expenses = profit
   const annualTurnoverOrProfessionalIncome =
     computeEstimatedAnnualProfessionalIncome(values);
@@ -75,7 +116,10 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     userProfessionalIncome + clampNonNegative(values.otherIncome),
   );
 
-  const partnerIncome = roundToCents(clampNonNegative(values.partnerIncome));
+  const partnerIncome =
+    values.partnerHasSalariedIncome || values.partnerHasSelfEmployedIncome
+      ? roundToCents(partnerSalaryAfterExpenses + partnerSelfEmployedNetForIpp)
+      : roundToCents(clampNonNegative(values.partnerIncome));
   const householdIncome = roundToCents(userIncome + partnerIncome);
 
   const hasPartner =
@@ -221,6 +265,7 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     taxTotalIncludingMunicipalAndCsss +
       advancePaymentPenalty -
       withholdingTax -
+      roundToCents(clampNonNegative(partnerWithholdingTax)) -
       advanceTaxPayments,
   );
 
@@ -264,7 +309,10 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     taxTotalIncludingMunicipal,
     taxTotalIncludingMunicipalAndCsss,
     socialContributions,
-    withholdingTax: roundToCents(clampNonNegative(withholdingTax)),
+    withholdingTax: roundToCents(
+      clampNonNegative(withholdingTax) +
+        clampNonNegative(partnerWithholdingTax),
+    ),
     advanceTaxPayments,
     advancePaymentPenalty,
     finalBalance,

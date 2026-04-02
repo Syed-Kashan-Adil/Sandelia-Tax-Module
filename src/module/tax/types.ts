@@ -48,6 +48,16 @@ export interface TaxOnboardingValues {
 
   // Step 5
   partnerIncome: number;
+  partnerHasSalariedIncome: boolean;
+  partnerSalariedIncome: number;
+  partnerWithholdingTax: number;
+  partnerWithholdingTaxMode: "known" | "unknown";
+  partnerApplyEmployeeProfessionalExpensesLumpSum: boolean;
+  partnerEmployeeProfessionalExpensesLumpSumOverride: number | null;
+  partnerHasSelfEmployedIncome: boolean;
+  partnerEstimatedSelfEmployedIncome: number;
+  partnerEstimatedProfessionalExpenses: number;
+  partnerSocialContributionsAnnual: number;
 
   // Step 6 – Children
   children: DependentChildInput[];
