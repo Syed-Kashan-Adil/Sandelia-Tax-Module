@@ -9,11 +9,9 @@ import { Step2CompanyProfile } from "./steps/Step2CompanyProfile";
 import { Step2SelfEmployedStatus } from "./steps/Step2SelfEmployedStatus";
 import { Step3ActivityStartDate } from "./steps/Step3ActivityStartDate";
 import { Step3CompanyEstimatedProfit } from "./steps/Step3CompanyEstimatedProfit";
-import { Step3CompanyFinancials } from "./steps/Step3CompanyFinancials";
 import { Step4CompanyDirectors } from "./steps/Step4CompanyDirectors";
 import { Step4MaritalStatus } from "./steps/Step4MaritalStatus";
 import { Step4VatRegistration } from "./steps/Step4VatRegistration";
-import { Step5CompanyAdvancePayments } from "./steps/Step5CompanyAdvancePayments";
 import { Step5PartnerIncome } from "./steps/Step5PartnerIncome";
 import { Step6CompanySummary } from "./steps/Step6CompanySummary";
 import { Step6Dependents } from "./steps/Step6Dependents";
@@ -69,7 +67,7 @@ export function TaxWizard() {
       2: "Fiscal year information",
       3: "Estimated taxable profit",
       4: "Company profile",
-      5: "Company financials",
+      // 5: 'Company financials', // Disabled for now (per request)
       6: "Directors",
       7: "Marital status",
       8: "Partner income",
@@ -96,6 +94,49 @@ export function TaxWizard() {
     () =>
       isCompany && step === totalSteps
         ? calculateCompanyTaxSummary(values)
+        : null,
+    [isCompany, step, totalSteps, values],
+  );
+  const companyPersonalSummary = useMemo(
+    () =>
+      isCompany && step === totalSteps
+        ? (() => {
+            const primary =
+              values.companyDirectors.find(
+                (d) => d.id === values.companyPrimaryDirectorId,
+              ) ?? values.companyDirectors[0];
+            const mrRemuneration = primary ? primary.monthlySalary * 12 : 0;
+            const mrLumpSum = primary ? primary.lumpSumExpensesAnnual : 0;
+            const mrWithholding = primary ? primary.withholdingTaxAnnual : 0;
+            const partnerNet = Math.max(
+              0,
+              values.companyPartnerGrossSalary - 5750,
+            );
+            const withholdingTotal =
+              mrWithholding + values.companyPartnerWithholdingTax;
+            const socialAnnual = values.companySocialPaidAmount;
+
+            return calculateTaxSummary({
+              ...values,
+              taxSubject: "self-employed",
+              selfEmployedStatus: "main",
+              profitEstimationMode: "manual",
+              estimatedSelfEmployedProfit: mrRemuneration,
+              estimatedProfessionalExpenses: mrLumpSum,
+              isSocialContributionsExempt:
+                values.companyIsSocialContributionsExempt,
+              currentQuarterlySocialContribution:
+                socialAnnual > 0 ? socialAnnual / 4 : 0,
+              socialContributionsOverride:
+                socialAnnual > 0 ? socialAnnual : null,
+              partnerIncome: partnerNet,
+              withholdingTaxMode: "known",
+              withholdingTax: withholdingTotal,
+              hasSalariedIncome: true,
+              salariedIncome: 0,
+              applyEmployeeProfessionalExpensesLumpSum: true,
+            });
+          })()
         : null,
     [isCompany, step, totalSteps, values],
   );
@@ -167,7 +208,7 @@ export function TaxWizard() {
             {isCompany && step === 2 ? <Step2CompanyFiscalYearInfo /> : null}
             {isCompany && step === 3 ? <Step3CompanyEstimatedProfit /> : null}
             {isCompany && step === 4 ? <Step2CompanyProfile /> : null}
-            {isCompany && step === 5 ? <Step3CompanyFinancials /> : null}
+            {/* Step 5 disabled for now (Company financials) */}
             {isCompany && step === 6 ? <Step4CompanyDirectors /> : null}
             {isCompany && step === 7 ? <Step4MaritalStatus /> : null}
             {isCompany && step === 8 ? <Step5PartnerIncome /> : null}
@@ -183,10 +224,13 @@ export function TaxWizard() {
             {isCompany && step === 11 ? (
               <Step11CompanySocialContributions />
             ) : null}
-            {isCompany && step === 12 ? <Step5CompanyAdvancePayments /> : null}
+            {isCompany && step === 12 ? <Step12AdvancePayments /> : null}
             {isCompany && step === 13 ? <Step8Municipality /> : null}
             {isCompany && step === 14 && companySummary ? (
-              <Step6CompanySummary summary={companySummary} />
+              <Step6CompanySummary
+                summary={companySummary}
+                personalSummary={companyPersonalSummary}
+              />
             ) : null}
           </CardContent>
           <CardFooter>
@@ -238,12 +282,16 @@ function WizardFooter() {
 
   const nextDisabled =
     (!isCompany && step === 9 && values.municipality.trim() === "") ||
-    (isCompany && step === 6 && values.companyDirectors.length === 0) ||
+    (isCompany &&
+      step === 6 &&
+      values.companyHasDirectorsOrActivePartners &&
+      values.companyDirectors.length === 0) ||
     (isCompany && step === 13 && values.municipality.trim() === "");
 
   const handleBack = () => {
     if (isCompany) {
       if (step === 9 && !partnerStepVisible) return goTo(7);
+      if (step === 6) return goTo(4); // Skip disabled step 5
       return goBack();
     }
     // Skip partner step if it isn't relevant.
@@ -253,6 +301,7 @@ function WizardFooter() {
 
   const handleNext = () => {
     if (isCompany) {
+      if (step === 4) return goTo(6); // Skip disabled step 5
       if (step === 7 && !partnerStepVisible) return goTo(9);
       return goNext();
     }

@@ -27,9 +27,14 @@ export interface DependentChildInput {
 export interface CompanyDirectorInput {
   id: string;
   name: string;
+  role: "administrator" | "managing-director" | "active-partner";
   monthlySalary: number;
   expectedDividend: number;
   socialContributionOverrideAnnual: number | null;
+  lumpSumExpensesAnnual: number;
+  withholdingTaxAnnual: number;
+  socialContributionsPaidByCompany: boolean;
+  hasCompanyCar: boolean;
 }
 
 export interface TaxOnboardingValues {
@@ -148,7 +153,17 @@ export interface TaxOnboardingValues {
     vai3: number;
     vai4: number;
   };
+  companyHasDirectorsOrActivePartners: boolean;
+  companyPrimaryDirectorId: string | null;
   companyDirectors: CompanyDirectorInput[];
+  companyPartnerGrossSalary: number;
+  companyPartnerWithholdingTax: number;
+
+  // Company flow – social contributions screen inputs
+  companyIsSocialContributionsExempt: boolean;
+  companyCurrentQuarterlySocialContribution: number;
+  companySocialPaidBy: "personal" | "company";
+  companySocialPaidAmount: number;
 }
 
 export interface SocialContributionsBreakdown {

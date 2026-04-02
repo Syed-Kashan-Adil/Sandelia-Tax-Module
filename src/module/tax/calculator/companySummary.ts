@@ -12,13 +12,24 @@ const STANDARD_RATE = 0.25;
 const THEORETICAL_INCREASE_RATE = 0.0675;
 
 function getAdvancePayments(values: TaxOnboardingValues) {
-  const { vai1, vai2, vai3, vai4 } = values.companyAdvancePayments;
-  return {
-    vai1: roundToCents(clampNonNegative(vai1)),
-    vai2: roundToCents(clampNonNegative(vai2)),
-    vai3: roundToCents(clampNonNegative(vai3)),
-    vai4: roundToCents(clampNonNegative(vai4)),
-  };
+  const annual = roundToCents(clampNonNegative(values.advanceTaxPayments));
+  if (annual <= 0 || values.advanceTaxPaymentsMode === "none") {
+    return { vai1: 0, vai2: 0, vai3: 0, vai4: 0 };
+  }
+
+  if (values.advanceTaxPaymentsMode === "spread") {
+    const q = roundToCents(annual / 4);
+    const diff = roundToCents(annual - (q + q + q + q));
+    return {
+      vai1: roundToCents(q + diff),
+      vai2: q,
+      vai3: q,
+      vai4: q,
+    };
+  }
+
+  // optimize
+  return { vai1: annual, vai2: 0, vai3: 0, vai4: 0 };
 }
 
 function computeDirectorSocial(values: TaxOnboardingValues): {

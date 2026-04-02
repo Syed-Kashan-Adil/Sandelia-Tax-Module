@@ -22,7 +22,7 @@ export function Step2CompanyProfile() {
         />
       </Field>
 
-      <Field label="Is this company an SME?">
+      {/* <Field label="Is this company an SME?">
         <div className="flex gap-3">
           <Toggle
             label="Yes"
@@ -69,27 +69,7 @@ export function Step2CompanyProfile() {
             onClick={() => setValues({ companyIsFinancialCompany: true })}
           />
         </div>
-      </Field>
+      </Field> */}
     </div>
-  );
-}
-
-function Toggle(props: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={props.onClick}
-      className={`rounded-lg border px-4 py-2 text-sm ${
-        props.active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-border"
-      }`}
-    >
-      {props.label}
-    </button>
   );
 }

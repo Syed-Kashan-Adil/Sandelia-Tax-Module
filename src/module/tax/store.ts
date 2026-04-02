@@ -95,7 +95,15 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
     vai3: 0,
     vai4: 0,
   },
+  companyHasDirectorsOrActivePartners: true,
+  companyPrimaryDirectorId: null,
   companyDirectors: [],
+  companyPartnerGrossSalary: 0,
+  companyPartnerWithholdingTax: 0,
+  companyIsSocialContributionsExempt: false,
+  companyCurrentQuarterlySocialContribution: 0,
+  companySocialPaidBy: "personal",
+  companySocialPaidAmount: 0,
 };
 
 export const useTaxOnboardingStore = create<TaxOnboardingState>()(
@@ -167,15 +175,23 @@ export const useTaxOnboardingStore = create<TaxOnboardingState>()(
           const newDirector: CompanyDirectorInput = {
             id: director?.id ?? generatedId,
             name: director?.name ?? "",
+            role: director?.role ?? "managing-director",
             monthlySalary: director?.monthlySalary ?? 0,
             expectedDividend: director?.expectedDividend ?? 0,
             socialContributionOverrideAnnual:
               director?.socialContributionOverrideAnnual ?? null,
+            lumpSumExpensesAnnual: director?.lumpSumExpensesAnnual ?? 0,
+            withholdingTaxAnnual: director?.withholdingTaxAnnual ?? 0,
+            socialContributionsPaidByCompany:
+              director?.socialContributionsPaidByCompany ?? false,
+            hasCompanyCar: director?.hasCompanyCar ?? false,
           };
           return {
             values: {
               ...state.values,
               companyDirectors: [...state.values.companyDirectors, newDirector],
+              companyPrimaryDirectorId:
+                state.values.companyPrimaryDirectorId ?? newDirector.id,
             },
           };
         }),
@@ -187,6 +203,10 @@ export const useTaxOnboardingStore = create<TaxOnboardingState>()(
             companyDirectors: state.values.companyDirectors.filter(
               (director) => director.id !== id,
             ),
+            companyPrimaryDirectorId:
+              state.values.companyPrimaryDirectorId === id
+                ? null
+                : state.values.companyPrimaryDirectorId,
           },
         })),
     }),
