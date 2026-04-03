@@ -1,7 +1,7 @@
 export const IPP_2026 = {
   baseTaxFreeAllowance: 10910,
   professionalExpenses: {
-    // Document example (employee professional expenses lump sum)
+    /** Max lump-sum deduction for employees at typical income levels; effective deduction = min(this, gross salary). */
     employeeLumpSum: 5750,
   },
   maritalQuotient: {

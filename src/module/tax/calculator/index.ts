@@ -3,11 +3,43 @@ import { resolveMunicipalRate } from "../municipalRates";
 import type { TaxOnboardingValues, TaxSummary } from "../types";
 import { computeHouseholdAllowance } from "./allowance";
 import { computeCsss, shouldApplyCsss } from "./csss";
+import { effectiveEmployeeLumpSumDeduction } from "./employeeLumpSum";
 import { computeFederalTax } from "./federalTax";
 import { applyMaritalQuotient } from "./maritalQuotient";
 import { clampNonNegative, roundToCents } from "./money";
 import { computeEstimatedAnnualProfessionalIncome } from "./profitEstimation";
 import { computeSocialContributions } from "./socialContributions";
+
+function buildMaritalSplittingNote(params: {
+  hasPartner: boolean;
+  maritalStatus: TaxOnboardingValues["maritalStatus"];
+  quotient: ReturnType<typeof applyMaritalQuotient>;
+}): string {
+  const eligible = (
+    IPP_2026.maritalQuotient.eligibleStatuses as readonly string[]
+  ).includes(params.maritalStatus);
+  if (!params.hasPartner || !eligible) {
+    return "Marital income splitting does not apply for this marital status.";
+  }
+  const { before, applied, transferAmount, rate, cap } = params.quotient;
+  const total = roundToCents(before.userIncome + before.partnerIncome);
+  if (total <= 0) {
+    return "No household professional income to split.";
+  }
+  const thirtyPct = roundToCents(rate * total);
+  const higher = Math.max(before.userIncome, before.partnerIncome);
+  const lower = Math.min(before.userIncome, before.partnerIncome);
+  if (applied && transferAmount > 0) {
+    return `Marital income splitting: €${transferAmount.toFixed(2)} transferred (30% target of household professional income, cap €${cap.toFixed(2)}).`;
+  }
+  if (higher >= thirtyPct - 0.005) {
+    return "Marital income splitting does not apply: the higher earner's professional income already reaches or exceeds 30% of the household total.";
+  }
+  if (lower >= thirtyPct - 0.005) {
+    return "Marital income splitting does not apply: the lower earner already reaches or exceeds 30% of household professional income.";
+  }
+  return "No marital income transfer calculated.";
+}
 
 export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const salariedIncome = values.hasSalariedIncome ? values.salariedIncome : 0;
@@ -17,45 +49,50 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
       : values.withholdingTax
     : 0;
 
-  const lumpSum =
-    values.hasSalariedIncome && values.applyEmployeeProfessionalExpensesLumpSum
-      ? roundToCents(
-          clampNonNegative(
-            typeof values.employeeProfessionalExpensesLumpSumOverride ===
-              "number"
-              ? values.employeeProfessionalExpensesLumpSumOverride
-              : IPP_2026.professionalExpenses.employeeLumpSum,
-          ),
-        )
-      : 0;
+  const userEmployeeLumpSumDeduction = effectiveEmployeeLumpSumDeduction({
+    grossSalary: salariedIncome,
+    applyLumpSum: values.hasSalariedIncome && values.applyEmployeeProfessionalExpensesLumpSum,
+    overrideEuro: values.employeeProfessionalExpensesLumpSumOverride,
+  });
 
   const userSalaryAfterExpenses = roundToCents(
-    clampNonNegative(clampNonNegative(salariedIncome) - lumpSum),
+    clampNonNegative(clampNonNegative(salariedIncome) - userEmployeeLumpSumDeduction),
   );
 
-  const partnerSalariedIncome = values.partnerHasSalariedIncome
-    ? values.partnerSalariedIncome
-    : 0;
-  const partnerLumpSum =
-    values.partnerHasSalariedIncome &&
-    values.partnerApplyEmployeeProfessionalExpensesLumpSum
-      ? roundToCents(
-          clampNonNegative(
-            typeof values.partnerEmployeeProfessionalExpensesLumpSumOverride ===
-              "number"
-              ? values.partnerEmployeeProfessionalExpensesLumpSumOverride
-              : IPP_2026.professionalExpenses.employeeLumpSum,
-          ),
-        )
-      : 0;
-  const partnerSalaryAfterExpenses = roundToCents(
-    clampNonNegative(clampNonNegative(partnerSalariedIncome) - partnerLumpSum),
+  // Partner professional income:
+  // - if partner self-employed flag is set → treat as self-employed
+  // - otherwise → treat `partnerIncome` as salaried gross salary under the lump-sum system
+  //   (this matches the simple partner step where you only enter income + withholding tax).
+  const partnerTreatAsSalary = !values.partnerHasSelfEmployedIncome;
+
+  const partnerSalariedIncomeGross = roundToCents(
+    clampNonNegative(
+      values.partnerHasSalariedIncome
+        ? values.partnerSalariedIncome
+        : partnerTreatAsSalary
+          ? values.partnerIncome
+          : 0,
+    ),
   );
-  const partnerWithholdingTax = values.partnerHasSalariedIncome
-    ? values.partnerWithholdingTaxMode === "unknown"
+
+  const partnerEmployeeLumpSumDeduction = effectiveEmployeeLumpSumDeduction({
+    grossSalary: partnerTreatAsSalary ? partnerSalariedIncomeGross : 0,
+    applyLumpSum: values.partnerHasSalariedIncome
+      ? values.partnerHasSalariedIncome && values.partnerApplyEmployeeProfessionalExpensesLumpSum
+      : values.applyEmployeeProfessionalExpensesLumpSum,
+    overrideEuro: values.partnerHasSalariedIncome
+      ? values.partnerEmployeeProfessionalExpensesLumpSumOverride
+      : values.employeeProfessionalExpensesLumpSumOverride,
+  });
+
+  const partnerSalaryAfterExpenses = roundToCents(
+    clampNonNegative(partnerSalariedIncomeGross - partnerEmployeeLumpSumDeduction),
+  );
+
+  const partnerWithholdingTax =
+    values.partnerWithholdingTaxMode === "unknown"
       ? 0
-      : values.partnerWithholdingTax
-    : 0;
+      : values.partnerWithholdingTax;
 
   const partnerSelfEmployedGross = values.partnerHasSelfEmployedIncome
     ? roundToCents(clampNonNegative(values.partnerEstimatedSelfEmployedIncome))
@@ -116,10 +153,9 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     userProfessionalIncome + clampNonNegative(values.otherIncome),
   );
 
-  const partnerIncome =
-    values.partnerHasSalariedIncome || values.partnerHasSelfEmployedIncome
-      ? roundToCents(partnerSalaryAfterExpenses + partnerSelfEmployedNetForIpp)
-      : roundToCents(clampNonNegative(values.partnerIncome));
+  const partnerIncome = roundToCents(
+    partnerSalaryAfterExpenses + partnerSelfEmployedNetForIpp,
+  );
   const householdIncome = roundToCents(userIncome + partnerIncome);
 
   const hasPartner =
@@ -130,6 +166,12 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     maritalStatus: values.maritalStatus,
     userIncome: userProfessionalIncome,
     partnerIncome,
+  });
+
+  const maritalSplittingNote = buildMaritalSplittingNote({
+    hasPartner,
+    maritalStatus: values.maritalStatus,
+    quotient: maritalQuotient,
   });
 
   const allowance = computeHouseholdAllowance({
@@ -160,14 +202,45 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     federalGrossTaxUser.total + federalGrossTaxPartner.total,
   );
 
-  // Tax-free allowance reduction is computed on bracket layers (not flat 25%).
-  // Example: 16,320 @25% then remainder @40%, etc.
+  // Tax-free allowance reduction: progressive brackets on each spouse’s share of the allowance
+  // (partner base on partner; remainder on primary taxpayer — matches per-person examples like Hypothesis 5).
+  const userAllowanceShare = roundToCents(
+    clampNonNegative(
+      allowance.baseAllowanceSelf +
+        allowance.dependentsAllowance +
+        allowance.youngChildrenAllowance +
+        allowance.singleParentAllowance +
+        allowance.otherDependentsAllowance +
+        allowance.ageAllowanceSelf,
+    ),
+  );
+  const partnerAllowanceShare = roundToCents(
+    clampNonNegative(allowance.baseAllowancePartner),
+  );
+
+  const federalTaxReductionFromAllowancesUser = roundToCents(
+    computeFederalTax({ taxableIncome: userAllowanceShare }).total,
+  );
+  const federalTaxReductionFromAllowancesPartner = roundToCents(
+    computeFederalTax({ taxableIncome: partnerAllowanceShare }).total,
+  );
   const federalTaxReductionFromAllowances = roundToCents(
-    computeFederalTax({ taxableIncome: allowance.totalAllowanceHousehold })
-      .total,
+    federalTaxReductionFromAllowancesUser +
+      federalTaxReductionFromAllowancesPartner,
   );
   const federalTaxTotal = roundToCents(
     clampNonNegative(federalGrossTaxTotal - federalTaxReductionFromAllowances),
+  );
+
+  const federalNetTaxUser = roundToCents(
+    clampNonNegative(
+      federalGrossTaxUser.total - federalTaxReductionFromAllowancesUser,
+    ),
+  );
+  const federalNetTaxPartner = roundToCents(
+    clampNonNegative(
+      federalGrossTaxPartner.total - federalTaxReductionFromAllowancesPartner,
+    ),
   );
 
   const { rate: municipalRate } = resolveMunicipalRate({
@@ -299,10 +372,15 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     otherDependentsCount,
     allowance,
     maritalQuotient,
+    maritalSplittingNote,
     federalGrossTaxUser,
     federalGrossTaxPartner,
     federalGrossTaxTotal,
     federalTaxReductionFromAllowances,
+    federalTaxReductionFromAllowancesUser,
+    federalTaxReductionFromAllowancesPartner,
+    federalNetTaxUser,
+    federalNetTaxPartner,
     federalTaxTotal,
     municipalSurcharge,
     specialSocialSecurityContribution,
@@ -313,6 +391,16 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
       clampNonNegative(withholdingTax) +
         clampNonNegative(partnerWithholdingTax),
     ),
+    userWithholdingTax: roundToCents(clampNonNegative(withholdingTax)),
+    partnerWithholdingTax: roundToCents(clampNonNegative(partnerWithholdingTax)),
+    userEmployeeLumpSumDeduction,
+    partnerEmployeeLumpSumDeduction,
+    partnerHasSalariedIncomeDetailed: values.partnerHasSalariedIncome,
+    partnerSalariedIncomeGross: partnerSalariedIncomeGross,
+    partnerSelfEmployedGross: partnerSelfEmployedGross,
+    partnerSelfEmployedExpenses: partnerSelfEmployedExpenses,
+    partnerSelfEmployedSocialContributions: partnerSelfEmployedSocialContributions,
+    partnerSelfEmployedNetForIpp,
     advanceTaxPayments,
     advancePaymentPenalty,
     finalBalance,

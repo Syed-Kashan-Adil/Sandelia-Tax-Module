@@ -140,7 +140,8 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     title: 'Summary → order of computation',
     bullets: [
       'Gross federal tax is computed by brackets on quotient-adjusted income.',
-      'Tax-free allowance is applied as a 25% tax reduction.',
+      'Tax-free allowance is split across spouses and reduces tax via the same progressive brackets (couples: detailed Mr/Mrs-style steps on the summary).',
+      'Employee lump-sum professional expenses are capped by gross salary and by the legal max (e.g. €5,750).',
       'Municipal surcharge is added, then withholding and advance payments are deducted.',
     ],
     sources: [{ doc: 'Taxes Logic calculation .docx', ref: 'Fundamental rule: calculation order' }],
