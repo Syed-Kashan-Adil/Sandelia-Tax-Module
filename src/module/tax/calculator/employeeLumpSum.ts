@@ -2,8 +2,8 @@ import { IPP_2026 } from "../constants";
 import { clampNonNegative, roundToCents } from "./money";
 
 /**
- * Employee professional expenses under the lump-sum system: deduct up to the legal cap,
- * never more than gross salary (income cannot go negative).
+ * Employee professional expenses under the lump-sum system:
+ * estimate by rate on salary, capped by legal max, and never above gross salary.
  */
 export function effectiveEmployeeLumpSumDeduction(params: {
   grossSalary: number;
@@ -16,10 +16,10 @@ export function effectiveEmployeeLumpSumDeduction(params: {
     typeof params.overrideEuro === "number" &&
     Number.isFinite(params.overrideEuro)
   ) {
-    return roundToCents(
-      clampNonNegative(Math.min(params.overrideEuro, gross)),
-    );
+    return roundToCents(clampNonNegative(Math.min(params.overrideEuro, gross)));
   }
+  const rate = IPP_2026.professionalExpenses.employeeLumpSumRate;
   const cap = IPP_2026.professionalExpenses.employeeLumpSum;
-  return roundToCents(clampNonNegative(Math.min(cap, gross)));
+  const rateBased = gross * rate;
+  return roundToCents(clampNonNegative(Math.min(cap, rateBased, gross)));
 }

@@ -51,12 +51,16 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
 
   const userEmployeeLumpSumDeduction = effectiveEmployeeLumpSumDeduction({
     grossSalary: salariedIncome,
-    applyLumpSum: values.hasSalariedIncome && values.applyEmployeeProfessionalExpensesLumpSum,
+    applyLumpSum:
+      values.hasSalariedIncome &&
+      values.applyEmployeeProfessionalExpensesLumpSum,
     overrideEuro: values.employeeProfessionalExpensesLumpSumOverride,
   });
 
   const userSalaryAfterExpenses = roundToCents(
-    clampNonNegative(clampNonNegative(salariedIncome) - userEmployeeLumpSumDeduction),
+    clampNonNegative(
+      clampNonNegative(salariedIncome) - userEmployeeLumpSumDeduction,
+    ),
   );
 
   // Partner professional income:
@@ -78,15 +82,17 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const partnerEmployeeLumpSumDeduction = effectiveEmployeeLumpSumDeduction({
     grossSalary: partnerTreatAsSalary ? partnerSalariedIncomeGross : 0,
     applyLumpSum: values.partnerHasSalariedIncome
-      ? values.partnerHasSalariedIncome && values.partnerApplyEmployeeProfessionalExpensesLumpSum
-      : values.applyEmployeeProfessionalExpensesLumpSum,
+      ? values.partnerApplyEmployeeProfessionalExpensesLumpSum
+      : partnerTreatAsSalary,
     overrideEuro: values.partnerHasSalariedIncome
       ? values.partnerEmployeeProfessionalExpensesLumpSumOverride
-      : values.employeeProfessionalExpensesLumpSumOverride,
+      : null,
   });
 
   const partnerSalaryAfterExpenses = roundToCents(
-    clampNonNegative(partnerSalariedIncomeGross - partnerEmployeeLumpSumDeduction),
+    clampNonNegative(
+      partnerSalariedIncomeGross - partnerEmployeeLumpSumDeduction,
+    ),
   );
 
   const partnerWithholdingTax =
@@ -98,11 +104,14 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     ? roundToCents(clampNonNegative(values.partnerEstimatedSelfEmployedIncome))
     : 0;
   const partnerSelfEmployedExpenses = values.partnerHasSelfEmployedIncome
-    ? roundToCents(clampNonNegative(values.partnerEstimatedProfessionalExpenses))
+    ? roundToCents(
+        clampNonNegative(values.partnerEstimatedProfessionalExpenses),
+      )
     : 0;
-  const partnerSelfEmployedSocialContributions = values.partnerHasSelfEmployedIncome
-    ? roundToCents(clampNonNegative(values.partnerSocialContributionsAnnual))
-    : 0;
+  const partnerSelfEmployedSocialContributions =
+    values.partnerHasSelfEmployedIncome
+      ? roundToCents(clampNonNegative(values.partnerSocialContributionsAnnual))
+      : 0;
   const partnerSelfEmployedNetForIpp = roundToCents(
     clampNonNegative(
       partnerSelfEmployedGross -
@@ -286,20 +295,21 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     const diffMonths =
       (end.getFullYear() - start.getFullYear()) * 12 +
       (end.getMonth() - start.getMonth());
-    return diffMonths < 36; // first 3 years
+    return diffMonths < IPP_2026.advancePaymentPenalty.exemptMaxMonthsExclusive;
   })();
 
-  // Advance payment penalty interest (self-employed only).
-  // Uses annual advance payments and assumes a simplified quarter distribution based on mode.
+  // Advance payment penalty (self-employed IPP): after the first 3 years, insufficient advances → surcharge
+  // (Royal Decree rates; see `IPP_2026.advancePaymentPenalty`). Companies (ISOC): same policy intent when that engine exists.
   let advancePaymentPenalty = 0;
+  const apPen = IPP_2026.advancePaymentPenalty;
   if (
     values.taxSubject === "self-employed" &&
     !isStarterSelfEmployed &&
-    taxTotalIncludingMunicipal >= 1000
+    taxTotalIncludingMunicipal >= apPen.minimumTaxTotalEuro
   ) {
     const taxTotal = taxTotalIncludingMunicipal;
-    const penaltyBase = taxTotal * 1.06;
-    const penaltyGross = penaltyBase * 0.0675;
+    const penaltyBase = taxTotal * apPen.taxTotalAugmentationMultiplier;
+    const penaltyGross = penaltyBase * apPen.surchargeRateOnAugmentedTax;
 
     const annualAdv = advanceTaxPayments;
     const mode = values.advanceTaxPaymentsMode;
@@ -328,9 +338,11 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
       }
     }
 
-    const reduction = vaQ1 * 0.09 + vaQ2 * 0.075 + vaQ3 * 0.06 + vaQ4 * 0.045;
+    const [r1, r2, r3, r4] = apPen.quarterReductionRates;
+    const reduction = vaQ1 * r1 + vaQ2 * r2 + vaQ3 * r3 + vaQ4 * r4;
 
-    const penaltyUnrounded = Math.max(0, penaltyGross - reduction) * 0.9;
+    const penaltyUnrounded =
+      Math.max(0, penaltyGross - reduction) * apPen.finalMitigationFactor;
     advancePaymentPenalty = roundToCents(penaltyUnrounded);
   }
 
@@ -392,14 +404,17 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
         clampNonNegative(partnerWithholdingTax),
     ),
     userWithholdingTax: roundToCents(clampNonNegative(withholdingTax)),
-    partnerWithholdingTax: roundToCents(clampNonNegative(partnerWithholdingTax)),
+    partnerWithholdingTax: roundToCents(
+      clampNonNegative(partnerWithholdingTax),
+    ),
     userEmployeeLumpSumDeduction,
     partnerEmployeeLumpSumDeduction,
     partnerHasSalariedIncomeDetailed: values.partnerHasSalariedIncome,
     partnerSalariedIncomeGross: partnerSalariedIncomeGross,
     partnerSelfEmployedGross: partnerSelfEmployedGross,
     partnerSelfEmployedExpenses: partnerSelfEmployedExpenses,
-    partnerSelfEmployedSocialContributions: partnerSelfEmployedSocialContributions,
+    partnerSelfEmployedSocialContributions:
+      partnerSelfEmployedSocialContributions,
     partnerSelfEmployedNetForIpp,
     advanceTaxPayments,
     advancePaymentPenalty,
