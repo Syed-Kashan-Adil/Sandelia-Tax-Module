@@ -303,6 +303,8 @@ export interface CompanySocialContributionBreakdown {
 
 export interface CompanyTaxSummary {
   accountingResult: number;
+  /** Non-deductible expenses (DNA) added back to the accounting result for tax. */
+  dnaAddBack: number;
   taxResultBeforeLosses: number;
   carriedForwardLossUsed: number;
   carriedForwardLossRemaining: number;

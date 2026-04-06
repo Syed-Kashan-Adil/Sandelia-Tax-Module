@@ -28,7 +28,10 @@ export function Step3CompanyFinancials() {
           }
         />
       </Field>
-      <Field label="DNA (non-deductible expenses)">
+      <Field
+        label="DNA (non-deductible expenses)"
+        hint="Portion of booked expenses that is not tax-deductible. It is added back on top of the accounting result to compute the ISOC base (when you use detailed accounting inputs)."
+      >
         <Input
           type="number"
           min={0}

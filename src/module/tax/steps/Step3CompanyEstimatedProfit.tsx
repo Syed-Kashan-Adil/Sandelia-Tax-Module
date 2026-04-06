@@ -40,9 +40,17 @@ export function Step3CompanyEstimatedProfit() {
           }
         />
       </Field>
-      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-        SME Reduced Rate: 20% on first EUR 100,000, then 25% on remaining
-        profit.
+      <div className="rounded-lg border border-primary/30 bg-primary/5 space-y-2 p-3 text-sm">
+        <p>
+          <span className="font-medium">Use detailed accounting inputs</span>{" "}
+          uses revenue, accounting expenses, DNA, and carried-forward loss from
+          the Company financials step to derive taxable profit (accounting
+          result + DNA − losses).
+        </p>
+        <p>
+          SME reduced rate: 20% on the first EUR 100,000 of taxable profit, then
+          25% on the remainder (when eligibility rules are met).
+        </p>
       </div>
     </div>
   );

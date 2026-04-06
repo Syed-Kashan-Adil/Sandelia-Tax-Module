@@ -93,7 +93,7 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
   companyCarriedForwardLoss: 0,
   companyFiscalYearEndDate: todayIsoDate(),
   companyTaxRegime: "sme-reduced",
-  companyEstimatedTaxableProfitMode: "manual",
+  companyEstimatedTaxableProfitMode: "detailed",
   companyEstimatedTaxableProfit: 0,
   companyIsSme: true,
   companyDirectorRemunerationEligible: true,
