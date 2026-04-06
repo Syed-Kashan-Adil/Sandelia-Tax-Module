@@ -3,7 +3,7 @@ import { Field } from '../ui/Field'
 import { Input } from '../ui/Input'
 
 export function Step5PartnerIncome() {
-  const taxSubject = useTaxOnboardingStore((s) => s.values.taxSubject)
+  // const taxSubject = useTaxOnboardingStore((s) => s.values.taxSubject)
   const maritalStatus = useTaxOnboardingStore((s) => s.values.maritalStatus)
   const partnerIncome = useTaxOnboardingStore((s) => s.values.partnerIncome)
   const partnerWithholdingTax = useTaxOnboardingStore((s) => s.values.partnerWithholdingTax)

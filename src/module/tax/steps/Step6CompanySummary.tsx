@@ -1,19 +1,19 @@
-import type { CompanyTaxSummary, TaxSummary } from "../types";
-import { Button } from "../ui/Button";
+import type { CompanyTaxSummary, TaxSummary } from '../types'
+import { Button } from '../ui/Button'
 
 function eur(n: number): string {
-  return new Intl.NumberFormat("nl-BE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(n);
+  return new Intl.NumberFormat('nl-BE', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(n)
 }
 
 export function Step6CompanySummary(props: {
-  summary: CompanyTaxSummary;
-  personalSummary: TaxSummary | null;
+  summary: CompanyTaxSummary
+  personalSummary: TaxSummary | null
 }) {
-  const s = props.summary;
-  const p = props.personalSummary;
+  const s = props.summary
+  // const p = props.personalSummary;
 
   // const perPerson = (() => {
   //   if (!p) return null
@@ -42,9 +42,7 @@ export function Step6CompanySummary(props: {
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-        <div className="text-sm font-semibold text-foreground">
-          Profile complete
-        </div>
+        <div className="text-sm font-semibold text-foreground">Profile complete</div>
         <div className="mt-1 text-xs text-muted-foreground">
           Company and personal simulation data has been processed.
         </div>
@@ -57,18 +55,9 @@ export function Step6CompanySummary(props: {
         <div className="space-y-2 rounded-lg border border-border bg-card p-4">
           <div className="space-y-2 text-sm">
             <Row label="Accounting result" value={eur(s.accountingResult)} />
-            <Row
-              label="DNA add-back (non-deductible expenses)"
-              value={eur(s.dnaAddBack)}
-            />
-            <Row
-              label="Tax result before losses"
-              value={eur(s.taxResultBeforeLosses)}
-            />
-            <Row
-              label="Carried-forward loss used"
-              value={eur(-s.carriedForwardLossUsed)}
-            />
+            <Row label="DNA add-back (non-deductible expenses)" value={eur(s.dnaAddBack)} />
+            <Row label="Tax result before losses" value={eur(s.taxResultBeforeLosses)} />
+            <Row label="Carried-forward loss used" value={eur(-s.carriedForwardLossUsed)} />
             <Row
               label="Carried-forward loss remaining"
               value={eur(s.carriedForwardLossRemaining)}
@@ -77,14 +66,8 @@ export function Step6CompanySummary(props: {
             <Row label="ISOC @20%" value={eur(s.isocAt20)} />
             <Row label="ISOC @25%" value={eur(s.isocAt25)} />
             <Row label="Gross ISOC" value={eur(s.grossIsoc)} />
-            <Row
-              label="Theoretical increase"
-              value={eur(s.theoreticalIncrease)}
-            />
-            <Row
-              label="VAI reduction credit"
-              value={eur(-s.vaiReductionCredit)}
-            />
+            <Row label="Theoretical increase" value={eur(s.theoreticalIncrease)} />
+            <Row label="VAI reduction credit" value={eur(-s.vaiReductionCredit)} />
             <Row label="Final increase" value={eur(s.finalIncrease)} />
             <Row
               label="Total tax before advance deduction"
@@ -96,11 +79,7 @@ export function Step6CompanySummary(props: {
               highlightGreen
             />
             <div className="border-t border-border pt-2">
-              <Row
-                label="Final company tax payable"
-                value={eur(s.finalTaxPayable)}
-                strong
-              />
+              <Row label="Final company tax payable" value={eur(s.finalTaxPayable)} strong />
             </div>
             {s.noIncreaseReason ? (
               <div className="rounded-md border border-border/70 bg-secondary/30 p-3 text-xs text-muted-foreground">
@@ -245,7 +224,7 @@ export function Step6CompanySummary(props: {
         Get started
       </Button>
     </div>
-  );
+  )
 }
 
 // function taxOnAllowance(allowance: number): number {
@@ -268,26 +247,21 @@ export function Step6CompanySummary(props: {
 //   return Math.round((tax + Number.EPSILON) * 100) / 100
 // }
 
-function Row(props: {
-  label: string;
-  value: string;
-  strong?: boolean;
-  highlightGreen?: boolean;
-}) {
+function Row(props: { label: string; value: string; strong?: boolean; highlightGreen?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-muted-foreground">{props.label}</span>
       <span
         className={
           props.strong
-            ? "font-semibold text-foreground"
+            ? 'font-semibold text-foreground'
             : props.highlightGreen
-              ? "font-medium text-green-600 dark:text-green-400"
-              : ""
+              ? 'font-medium text-green-600 dark:text-green-400'
+              : ''
         }
       >
         {props.value}
       </span>
     </div>
-  );
+  )
 }
