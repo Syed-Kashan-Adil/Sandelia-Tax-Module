@@ -1,48 +1,71 @@
+/**
+ * IPP parameters for **income year 2026** (assessment year 2027), per product / Kevin spec.
+ * Federal brackets, marital quotient cap, and employee / director lump-sum caps are aligned to
+ * the indexed amounts for that framework.
+ */
 export const IPP_2026 = {
-  baseTaxFreeAllowance: 10910,
+  baseTaxFreeAllowance: 11180,
   professionalExpenses: {
-    // Document example (employee professional expenses lump sum)
-    employeeLumpSum: 5750,
+    /**
+     * Employee lump-sum professional expenses:
+     * `min(grossSalary * employeeLumpSumRate, employeeLumpSum, grossSalary)`.
+     */
+    employeeLumpSumRate: 0.3,
+    /** Max lump-sum for employees (income year 2026). */
+    employeeLumpSum: 6070,
+    /**
+     * Max lump-sum for remuneration of company directors (281.20-style); use when director flow is modelled.
+     */
+    companyDirectorLumpSumMax: 3200,
   },
   maritalQuotient: {
     transferRate: 0.3,
-    cap: 13050,
-    eligibleStatuses: ['married', 'legally-cohabiting'] as const,
+    cap: 13800,
+    eligibleStatuses: ["married", "legally-cohabiting"] as const,
   },
+  /** Progressive federal tax on taxable income (same schedule used for allowance tax reduction in this simulator). */
   federalBrackets: [
-    { from: 0, to: 16320, rate: 0.25 },
-    { from: 16320, to: 28800, rate: 0.4 },
-    { from: 28800, to: 51070, rate: 0.45 },
+    { from: 0, to: 16720, rate: 0.25 },
+    { from: 16720, to: 29510, rate: 0.4 },
+    { from: 29510, to: 51070, rate: 0.45 },
     { from: 51070, to: null, rate: 0.5 },
   ] as const,
   dependentsAllowance: {
-    oneChild: 1980,
-    twoChildren: 5110,
-    threeChildren: 11090,
-    fourChildren: 17940,
-    extraPerChildBeyondFour: 6850,
-    // For each child under 3 on 1 January of the assessment year (additional increase)
+    oneChild: 2030,
+    twoChildren: 5230,
+    threeChildren: 11720,
+    fourChildren: 18970,
+    extraPerChildBeyondFour: 7240,
     youngChildAgeThreshold: 3,
-    youngChildAdditionalAllowance: 740,
-    // Single parent with at least one dependent child.
-    singleParentWithDependentChild: 1980,
+    youngChildAdditionalAllowance: 760,
+    singleParentWithDependentChild: 2029,
     otherDependents: {
-      age65InDependency: 5770,
-      age65SevereDisabilityRequiringCareDependentIn2021: 7700,
-      age65NotRequiringCareDependentIn2021: 3850,
-      age65NotRequiringCareDependentIn2021SevereDisability: 7700,
-      other: 1980,
-      otherSevereDisability: 3840,
+      age65InDependency: 5913,
+      age65SevereDisabilityRequiringCareDependentIn2021: 7890,
+      age65NotRequiringCareDependentIn2021: 3945,
+      age65NotRequiringCareDependentIn2021SevereDisability: 7890,
+      other: 2029,
+      otherSevereDisability: 3935,
     },
   },
-  // Assessment year for "1 January of the assessment year" (e.g. young child rule)
   assessmentYear: 2026,
   ageAllowance: {
     seniorAge: 65,
-    seniorAllowance: 5770,
+    seniorAllowance: 5913,
   },
-  // Social contributions: legal % on net professional income, compare to minimum BASE (no fund fee),
-  // then apply fund fee. See Social contributions calculation logic-New.docx
+  /**
+   * IPP: surcharge when advance tax payments are insufficient (self-employed flow).
+   * First 36 months from activity start ≈ first 3 years → no surcharge (same policy intent as ISOC starter exemption for companies).
+   * Rates are set annually (Royal Decree); adjust `surchargeRateOnAugmentedTax` / multipliers when official 2026+ figures change (~6–7% range).
+   */
+  advancePaymentPenalty: {
+    exemptMaxMonthsExclusive: 36,
+    minimumTaxTotalEuro: 1000,
+    taxTotalAugmentationMultiplier: 1.06,
+    surchargeRateOnAugmentedTax: 0.0675,
+    quarterReductionRates: [0.09, 0.075, 0.06, 0.045] as const,
+    finalMitigationFactor: 0.9,
+  },
   socialContributions: {
     boundaries: {
       b0: 1922.16,
@@ -50,13 +73,9 @@ export const IPP_2026 = {
       b2: 75024.54,
       b3: 110562.42,
       article37Switch: 9101.26,
-      /** Assisting spouse (maxi): income up to this uses minimum base annual only */
       assistingSpouseMaxiUpToIncome: 7632.44,
-      /** Student self-employed: zone 1 upper bound (final €0; provisional minimum unless exempt) */
       studentZone1Max: 8687.03,
-      /** Student: switch to standard main-style logic */
       studentZone2Max: 17374.08,
-      /** Assisting spouse mini: first band ends here, second starts next cent */
       assistingSpouseMiniFirstBandEnd: 75024.53,
       assistingSpouseMiniSecondBandStart: 75024.54,
     },
@@ -68,7 +87,6 @@ export const IPP_2026 = {
       assistingSpouseMiniLow: 0.0079,
       assistingSpouseMiniHigh: 0.0051,
     },
-    /** Minimum annual contribution before fund fees (€/year) */
     minimumBaseAnnual: {
       main: 3562.04,
       secondary: 394.04,
@@ -76,12 +94,7 @@ export const IPP_2026 = {
       assistingSpouseMaxi: 1564.64,
       student: 394.04,
     },
-    /**
-     * Partena published all-in total when main-activity **minimum** applies (income ≤ b1).
-     * Slightly below legal × 1.042 due to official table rounding (927.82 €/quarter × 4).
-     */
     publishedMainMinimumAnnualPartena: 3711.28,
-    /** Fund fee applied to the legal annual amount after max(minimum, calculated) */
     fundFeeRates: {
       partena: 0.042,
       xerius: 0.0305,
@@ -91,4 +104,4 @@ export const IPP_2026 = {
       other: 0.042,
     } as const,
   },
-} as const
+} as const;

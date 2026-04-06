@@ -61,6 +61,16 @@ export interface TaxOnboardingValues {
 
   // Step 5
   partnerIncome: number;
+  partnerHasSalariedIncome: boolean;
+  partnerSalariedIncome: number;
+  partnerWithholdingTax: number;
+  partnerWithholdingTaxMode: "known" | "unknown";
+  partnerApplyEmployeeProfessionalExpensesLumpSum: boolean;
+  partnerEmployeeProfessionalExpensesLumpSumOverride: number | null;
+  partnerHasSelfEmployedIncome: boolean;
+  partnerEstimatedSelfEmployedIncome: number;
+  partnerEstimatedProfessionalExpenses: number;
+  partnerSocialContributionsAnnual: number;
 
   // Step 6 – Children
   children: DependentChildInput[];
@@ -236,11 +246,19 @@ export interface TaxSummary {
 
   allowance: AllowanceBreakdown;
   maritalQuotient: MaritalQuotientBreakdown;
+  /** Short explanation for summary (e.g. Hypothesis 5 style when splitting does not apply) */
+  maritalSplittingNote: string;
 
   federalGrossTaxUser: FederalTaxBreakdown;
   federalGrossTaxPartner: FederalTaxBreakdown;
   federalGrossTaxTotal: number;
   federalTaxReductionFromAllowances: number;
+  /** Tax-free allowance applied as federal tax reduction, split per spouse (progressive brackets on each share) */
+  federalTaxReductionFromAllowancesUser: number;
+  federalTaxReductionFromAllowancesPartner: number;
+  /** Federal tax after allowance, per person (gross − that person’s allowance reduction) */
+  federalNetTaxUser: number;
+  federalNetTaxPartner: number;
   federalTaxTotal: number;
 
   municipalSurcharge: MunicipalSurchargeBreakdown;
@@ -251,6 +269,22 @@ export interface TaxSummary {
   socialContributions: SocialContributionsBreakdown;
 
   withholdingTax: number;
+  /** Primary taxpayer withholding only (partner withheld separately for household breakdown) */
+  userWithholdingTax: number;
+  partnerWithholdingTax: number;
+  /** Employee lump-sum professional expenses actually deducted (≤ gross, ≤ cap) */
+  userEmployeeLumpSumDeduction: number;
+  partnerEmployeeLumpSumDeduction: number;
+  /** Whether partner detailed salaried inputs were used (not the legacy fallback `partnerIncome`). */
+  partnerHasSalariedIncomeDetailed: boolean;
+  /** Partner gross salary before lump sum (0 if none) */
+  partnerSalariedIncomeGross: number;
+  /** Partner self-employed slice (0 if none); for Mrs/Mr-style summary lines */
+  partnerSelfEmployedGross: number;
+  partnerSelfEmployedExpenses: number;
+  partnerSelfEmployedSocialContributions: number;
+  partnerSelfEmployedNetForIpp: number;
+
   advanceTaxPayments: number;
 
   /** Advance payment penalty interest (self-employed) */

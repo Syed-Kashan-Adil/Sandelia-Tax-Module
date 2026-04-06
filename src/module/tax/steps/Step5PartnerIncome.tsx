@@ -7,7 +7,7 @@ export function Step5PartnerIncome() {
   const maritalStatus = useTaxOnboardingStore((s) => s.values.maritalStatus);
   const partnerIncome = useTaxOnboardingStore((s) => s.values.partnerIncome);
   const partnerWithholdingTax = useTaxOnboardingStore(
-    (s) => s.values.companyPartnerWithholdingTax,
+    (s) => s.values.partnerWithholdingTax,
   );
   const setValues = useTaxOnboardingStore((s) => s.setValues);
 
@@ -25,8 +25,8 @@ export function Step5PartnerIncome() {
       ) : null}
 
       <Field
-        label="Partner income (annual)"
-        hint="Used to evaluate the marital quotient. Enter 0 if your partner has no income."
+        label="Partner income (annual gross salary)"
+        hint="Married couples: this value is treated as salary under the lump-sum professional expenses system."
       >
         <Input
           type="number"
@@ -59,6 +59,18 @@ export function Step5PartnerIncome() {
           />
         </Field>
       ) : null}
+      <Field label="Partner withholding tax (€)">
+        <Input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          value={partnerWithholdingTax}
+          onChange={(e) =>
+            setValues({ partnerWithholdingTax: Number(e.target.value || 0) })
+          }
+          disabled={!enabled}
+        />
+      </Field>
     </div>
   );
 }

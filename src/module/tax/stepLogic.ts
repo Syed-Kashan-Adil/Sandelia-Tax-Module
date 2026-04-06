@@ -67,7 +67,7 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     title: "Marital status → marital quotient eligibility",
     bullets: [
       "If married / legally cohabiting, we can apply the marital quotient.",
-      "Income transfer is 30% capped at €13,050 and applies to professional income after expenses.",
+      "Income transfer is 30% capped at €13,800 (income year 2026 / AY 2027) and applies to professional income after expenses.",
     ],
     sources: [
       {
@@ -180,6 +180,8 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     bullets: [
       "Advance tax payments are deducted from the final balance due.",
       "Used to reduce (or avoid) penalty interest on underpayment.",
+      "IPP (self-employed): no advance-payment surcharge in the first 3 years after the activity start date; from year 4 onward a surcharge may apply if advances are insufficient (rates set annually by Royal Decree, modelled as ~6–7%).",
+      "Companies (ISOC): same “no increase in the first 3 years” idea applies to insufficient-advance surcharges when that flow is implemented.",
     ],
     sources: [
       {
@@ -201,7 +203,8 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     title: "Summary → order of computation",
     bullets: [
       "Gross federal tax is computed by brackets on quotient-adjusted income.",
-      "Tax-free allowance is applied as a 25% tax reduction.",
+      "Tax-free allowance is split across spouses and reduces tax via the same progressive brackets (couples: detailed Mr/Mrs-style steps on the summary).",
+      "Employee lump-sum professional expenses are capped by gross salary and by the legal max (income year 2026: €6,070; company directors: €3,200 when that flow is used).",
       "Municipal surcharge is added, then withholding and advance payments are deducted.",
     ],
     sources: [

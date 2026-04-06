@@ -6,17 +6,17 @@ This plan is based on the **IPP Logic.docx** you shared. It compares the documen
 
 ## 1. Document summary vs current implementation
 
-| Topic | In document | Current implementation | Action |
-|-------|-------------|------------------------|--------|
-| **Tax-free allowance (base)** | €10,910 per person | ✅ €10,910 in constants | None |
-| **Allowance as tax reduction** | Allowance converted to tax reduction at **25%** (e.g. €10,910 × 25% = €2,727.50 deducted from gross tax) | We subtract allowance from income, then apply brackets (different result) | **Decide**: align with doc (tax on full income − 25% of total allowance) or keep current |
-| **Tax brackets** | Example uses 15,200 / 26,830 / 41,020 (25% / 40% / 45%); doc says “table above” | We use 17,374.08 / 75,024.54 / 110,562.42 | Keep current brackets; doc example may be another year – make brackets configurable if needed |
-| **Dependent children** | 1/2/3/4 and 5+ formula; severe disability = 2; under 3 on 1 Jan = +€720 | ✅ Implemented | None |
-| **Dependents other than children** | **6 categories** with different amounts (see below) | Single “other dependents” count × €1,920 | **Extend** model and calculator |
-| **Marital quotient** | 30%, max €13,050; **professional expenses lump sum €5,930** deducted from income before quotient | We apply quotient to raw income; no lump sum | **Add** professional expenses lump sum (configurable) and apply before quotient |
-| **Municipal tax** | e.g. Overijse 7.3% of federal tax | ✅ Implemented | None |
-| **Form 281.10 (employee)** | Taxable remuneration (1250/2250), withholding (1286/2286), BIK (250/2250) | We have salaried income + withholding | Optional: add BIK field and/or form code hints in UI |
-| **Director income (281.20)** | Code 1400/2400; withholding 1450/2450; directors pay self-employed social contributions | Not modelled as separate “director” flow | Optional: add director remuneration as income source and document 281.20 |
+| Topic                              | In document                                                                                              | Current implementation                                                    | Action                                                                                        |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Tax-free allowance (base)**      | €10,910 per person                                                                                       | ✅ €10,910 in constants                                                   | None                                                                                          |
+| **Allowance as tax reduction**     | Allowance converted to tax reduction at **25%** (e.g. €10,910 × 25% = €2,727.50 deducted from gross tax) | We subtract allowance from income, then apply brackets (different result) | **Decide**: align with doc (tax on full income − 25% of total allowance) or keep current      |
+| **Tax brackets**                   | Example uses 15,200 / 26,830 / 41,020 (25% / 40% / 45%); doc says “table above”                          | We use 17,374.08 / 75,024.54 / 110,562.42                                 | Keep current brackets; doc example may be another year – make brackets configurable if needed |
+| **Dependent children**             | 1/2/3/4 and 5+ formula; severe disability = 2; under 3 on 1 Jan = +€720                                  | ✅ Implemented                                                            | None                                                                                          |
+| **Dependents other than children** | **6 categories** with different amounts (see below)                                                      | Single “other dependents” count × €1,920                                  | **Extend** model and calculator                                                               |
+| **Marital quotient**               | 30%, max €13,050; **professional expenses lump sum €5,930** deducted from income before quotient         | We apply quotient to raw income; no lump sum                              | **Add** professional expenses lump sum (configurable) and apply before quotient               |
+| **Municipal tax**                  | e.g. Overijse 7.3% of federal tax                                                                        | ✅ Implemented                                                            | None                                                                                          |
+| **Form 281.10 (employee)**         | Taxable remuneration (1250/2250), withholding (1286/2286), BIK (250/2250)                                | We have salaried income + withholding                                     | Optional: add BIK field and/or form code hints in UI                                          |
+| **Director income (281.20)**       | Code 1400/2400; withholding 1450/2450; directors pay self-employed social contributions                  | Not modelled as separate “director” flow                                  | Optional: add director remuneration as income source and document 281.20                      |
 
 ---
 
@@ -24,14 +24,14 @@ This plan is based on the **IPP Logic.docx** you shared. It compares the documen
 
 The document defines **six categories** with different allowance amounts. Right now we only support a single “other dependents” count at €1,920 each.
 
-| Category | Amount (€) | Notes |
-|----------|------------|--------|
-| Parent/grandparent etc. **65+ and in dependency** | 5,770 | In situation of dependency |
-| Parent etc. **65+**, severe disability, **requiring care**, dependent in 2021 | 7,700 | Already dependent in assessment year 2021 |
-| Parent etc. **65+**, **not requiring care**, dependent in 2021 | 3,850 | |
-| Parent etc. **65+**, not requiring care, dependent in 2021, **severe disability** | 7,700 | |
-| **Other dependents** | 1,920 | Current “other” rate |
-| **Other dependents with severe disability** | 3,840 | 2 × 1,920 |
+| Category                                                                          | Amount (€) | Notes                                     |
+| --------------------------------------------------------------------------------- | ---------- | ----------------------------------------- |
+| Parent/grandparent etc. **65+ and in dependency**                                 | 5,770      | In situation of dependency                |
+| Parent etc. **65+**, severe disability, **requiring care**, dependent in 2021     | 7,700      | Already dependent in assessment year 2021 |
+| Parent etc. **65+**, **not requiring care**, dependent in 2021                    | 3,850      |                                           |
+| Parent etc. **65+**, not requiring care, dependent in 2021, **severe disability** | 7,700      |                                           |
+| **Other dependents**                                                              | 1,920      | Current “other” rate                      |
+| **Other dependents with severe disability**                                       | 3,840      | 2 × 1,920                                 |
 
 **Implementation (recommended):**
 
@@ -66,12 +66,12 @@ So the **marital quotient** is applied to income **after** deducting the profess
 **Implementation:**
 
 - **Constants**
-  - Add e.g. `professionalExpensesLumpSum: 5930` (and optionally make it depend on income or year).
+  - Add e.g. `professionalExpenses.employeeLumpSum: 6070` (income year 2026); director cap `companyDirectorLumpSumMax: 3200` when modelled.
 - **Data model**
   - Add optional field(s), e.g.:
     - `professionalExpensesLumpSumUser` (number, optional)
     - `professionalExpensesLumpSumPartner` (number, optional)  
-  Or a single `applyProfessionalExpensesLumpSum: boolean` and use the constant for both when true.
+      Or a single `applyProfessionalExpensesLumpSum: boolean` and use the constant for both when true.
 - **Calculator**
   - In `calculateTaxSummary`, **before** `applyMaritalQuotient`:
     - Deduct lump sum from salaried (and/or self-employed) income per person, then pass the reduced “professional income” to `applyMaritalQuotient`.
@@ -104,7 +104,7 @@ These two can give different results (e.g. for Jean €38,000 the doc gives €1
 
 **Implementation options:**
 
-- **Option A (align with document)**  
+- **Option A (align with document)**
   - Change federal tax logic to:
     - `grossTaxUser` = tax on full quotient‑adjusted user income (no allowance deduction).
     - `grossTaxPartner` = same for partner.
@@ -112,7 +112,7 @@ These two can give different results (e.g. for Jean €38,000 the doc gives €1
     - `taxReduction` = totalAllowance × 0.25 (or per‑person 10,910×0.25 + allowance increases×0.25, depending on how the doc is interpreted for “increases”).
     - Federal tax = grossTaxUser + grossTaxPartner − taxReduction.
   - Requires defining “total allowance” precisely (e.g. base 10,910 + all increases; then one 25% reduction on that total).
-- **Option B (keep current)**  
+- **Option B (keep current)**
   - Keep “taxable income = income − allowance” and bracket tax. Add a short comment in code and/or docs that the document describes a “25% tax reduction” method and that our method is an alternative formulation (and may differ slightly).
 
 **Recommendation:** Implement **Option A** if you need to match the document and official Belgian practice; otherwise keep Option B and document the difference.
@@ -150,9 +150,9 @@ These can be Phase 2: extra fields + small UI hints, without changing core logic
 ## 7. Summary
 
 - **Already aligned:** Base allowance €10,910, dependent children (including severe disability and under‑3), marital quotient 30% / €13,050, municipal tax %, other dependents at €1,920.
-- **To add/change:**  
-  - Professional expenses lump sum (€5,930) before quotient.  
-  - Other dependents in 6 categories with correct amounts.  
+- **To add/change:**
+  - Professional expenses lump sum (€5,930) before quotient.
+  - Other dependents in 6 categories with correct amounts.
   - Optional: federal tax via “25% tax reduction” (Option A) and optional BIK/director/form hints.
 
 If you tell me your priority (e.g. “lump sum first” or “other dependents categories first”), I can outline the exact code changes (files and steps) next.
