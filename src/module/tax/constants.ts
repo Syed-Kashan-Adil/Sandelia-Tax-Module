@@ -1,29 +1,34 @@
 /**
- * IPP parameters for simulations on **income year / framework 2026** (per product spec).
- * Indexed amounts for children, brackets, marital quotient cap, and employee lump-sum max follow
- * published tables (e.g. BDO “indexed amounts … assessment year 2026”); base tax-free amount €11,180
- * per internal confirmation (replacing legacy €10,910).
+ * IPP parameters for **income year 2026** (assessment year 2027), per product / Kevin spec.
+ * Federal brackets, marital quotient cap, and employee / director lump-sum caps are aligned to
+ * the indexed amounts for that framework.
  */
 export const IPP_2026 = {
   baseTaxFreeAllowance: 11180,
   professionalExpenses: {
     /**
      * Employee lump-sum professional expenses:
-     * base estimate is `grossSalary * employeeLumpSumRate`, capped at `employeeLumpSum`.
+     * `min(grossSalary * employeeLumpSumRate, employeeLumpSum, grossSalary)`.
      */
     employeeLumpSumRate: 0.3,
-    employeeLumpSum: 5930,
+    /** Max lump-sum for employees (income year 2026). */
+    employeeLumpSum: 6070,
+    /**
+     * Max lump-sum for remuneration of company directors (281.20-style); use when director flow is modelled.
+     */
+    companyDirectorLumpSumMax: 3200,
   },
   maritalQuotient: {
     transferRate: 0.3,
-    cap: 13460,
-    eligibleStatuses: ["married", "legally-cohabiting"] as const,
+    cap: 13800,
+    eligibleStatuses: ['married', 'legally-cohabiting'] as const,
   },
+  /** Progressive federal tax on taxable income (same schedule used for allowance tax reduction in this simulator). */
   federalBrackets: [
-    { from: 0, to: 16320, rate: 0.25 },
-    { from: 16320, to: 28800, rate: 0.4 },
-    { from: 28800, to: 49840, rate: 0.45 },
-    { from: 49840, to: null, rate: 0.5 },
+    { from: 0, to: 16720, rate: 0.25 },
+    { from: 16720, to: 29510, rate: 0.4 },
+    { from: 29510, to: 51070, rate: 0.45 },
+    { from: 51070, to: null, rate: 0.5 },
   ] as const,
   dependentsAllowance: {
     oneChild: 2030,
@@ -99,4 +104,4 @@ export const IPP_2026 = {
       other: 0.042,
     } as const,
   },
-} as const;
+} as const

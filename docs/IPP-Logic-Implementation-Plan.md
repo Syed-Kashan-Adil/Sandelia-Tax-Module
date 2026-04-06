@@ -66,7 +66,7 @@ So the **marital quotient** is applied to income **after** deducting the profess
 **Implementation:**
 
 - **Constants**
-  - Add e.g. `professionalExpensesLumpSum: 5930` (and optionally make it depend on income or year).
+  - Add e.g. `professionalExpenses.employeeLumpSum: 6070` (income year 2026); director cap `companyDirectorLumpSumMax: 3200` when modelled.
 - **Data model**
   - Add optional field(s), e.g.:
     - `professionalExpensesLumpSumUser` (number, optional)

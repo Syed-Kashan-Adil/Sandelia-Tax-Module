@@ -67,7 +67,7 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     title: "Marital status → marital quotient eligibility",
     bullets: [
       "If married / legally cohabiting, we can apply the marital quotient.",
-      "Income transfer is 30% capped at €13,460 (2026 indexed) and applies to professional income after expenses.",
+      "Income transfer is 30% capped at €13,800 (income year 2026 / AY 2027) and applies to professional income after expenses.",
     ],
     sources: [
       {
@@ -204,7 +204,7 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
     bullets: [
       "Gross federal tax is computed by brackets on quotient-adjusted income.",
       "Tax-free allowance is split across spouses and reduces tax via the same progressive brackets (couples: detailed Mr/Mrs-style steps on the summary).",
-      "Employee lump-sum professional expenses are capped by gross salary and by the legal max (2026 indexed, e.g. €5,930).",
+      "Employee lump-sum professional expenses are capped by gross salary and by the legal max (income year 2026: €6,070; company directors: €3,200 when that flow is used).",
       "Municipal surcharge is added, then withholding and advance payments are deducted.",
     ],
     sources: [
