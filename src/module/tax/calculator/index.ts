@@ -367,6 +367,7 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     partnerSelfEmployedExpenses: partnerSelfEmployedExpenses,
     partnerSelfEmployedSocialContributions: partnerSelfEmployedSocialContributions,
     partnerSelfEmployedNetForIpp,
+    advanceTaxPaymentsMode: values.advanceTaxPaymentsMode,
     advanceTaxPayments,
     advancePaymentPenalty,
     finalBalance,

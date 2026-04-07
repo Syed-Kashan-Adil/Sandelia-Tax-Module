@@ -6,7 +6,19 @@ import { Input } from '../ui/Input'
 export function Step12AdvancePayments() {
   const advanceTaxPayments = useTaxOnboardingStore((s) => s.values.advanceTaxPayments)
   const mode = useTaxOnboardingStore((s) => s.values.advanceTaxPaymentsMode)
+  const taxSubject = useTaxOnboardingStore((s) => s.values.taxSubject)
+  const fiscalYearStart = useTaxOnboardingStore((s) => s.values.activityStartDate)
+  const fiscalYearEnd = useTaxOnboardingStore((s) => s.values.companyFiscalYearEndDate)
   const setValues = useTaxOnboardingStore((s) => s.setValues)
+  const isCompany = taxSubject === 'company'
+
+  const quarterPlan = buildQuarterPlan({
+    annualTotal: advanceTaxPayments,
+    mode,
+  })
+  const fiscalQuarterRanges = isCompany
+    ? buildFiscalQuarterRanges({ startIso: fiscalYearStart, endIso: fiscalYearEnd })
+    : null
 
   return (
     <div className="space-y-6">
@@ -45,6 +57,34 @@ export function Step12AdvancePayments() {
         />
       </Field>
 
+      {mode !== 'none' && advanceTaxPayments > 0 ? (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-sm font-semibold text-foreground">
+            Quarter-wise payment breakdown
+          </div>
+          <div className="mt-2 grid gap-3 md:grid-cols-2">
+            {quarterPlan.map((q, idx) => (
+              <div key={q.label} className="rounded-lg border border-border/70 bg-secondary/30 p-3">
+                <div className="text-xs font-medium text-foreground">
+                  {q.label}
+                  {isCompany && fiscalQuarterRanges ? (
+                    <span className="ml-1 text-muted-foreground">
+                      ({fiscalQuarterRanges[idx]})
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-1 text-sm font-semibold text-foreground">{eur(q.amount)}</div>
+              </div>
+            ))}
+          </div>
+          {isCompany ? (
+            <div className="mt-2 text-xs text-muted-foreground">
+              Quarters are shown against your fiscal year dates.
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
         <div className="text-sm font-semibold text-foreground">Why make advance payments?</div>
         <div className="mt-1 text-sm text-muted-foreground">
@@ -54,6 +94,73 @@ export function Step12AdvancePayments() {
       </div>
     </div>
   )
+}
+
+function buildQuarterPlan(params: {
+  annualTotal: number
+  mode: 'none' | 'spread' | 'optimize'
+}): Array<{ label: 'Q1' | 'Q2' | 'Q3' | 'Q4'; amount: number }> {
+  const total = Math.max(0, params.annualTotal)
+  if (total <= 0 || params.mode === 'none') {
+    return [
+      { label: 'Q1', amount: 0 },
+      { label: 'Q2', amount: 0 },
+      { label: 'Q3', amount: 0 },
+      { label: 'Q4', amount: 0 },
+    ]
+  }
+  if (params.mode === 'optimize') {
+    return [
+      { label: 'Q1', amount: round2(total) },
+      { label: 'Q2', amount: 0 },
+      { label: 'Q3', amount: 0 },
+      { label: 'Q4', amount: 0 },
+    ]
+  }
+  const perQuarter = round2(total / 4)
+  const q2 = perQuarter
+  const q3 = perQuarter
+  const q4 = perQuarter
+  const q1 = round2(total - q2 - q3 - q4)
+  return [
+    { label: 'Q1', amount: q1 },
+    { label: 'Q2', amount: q2 },
+    { label: 'Q3', amount: q3 },
+    { label: 'Q4', amount: q4 },
+  ]
+}
+
+function buildFiscalQuarterRanges(params: { startIso: string; endIso: string }): string[] {
+  const start = new Date(params.startIso)
+  const end = new Date(params.endIso)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return ['Q1', 'Q2', 'Q3', 'Q4']
+  }
+  const totalMs = end.getTime() - start.getTime() + 24 * 60 * 60 * 1000
+  const qMs = totalMs / 4
+  const ranges: string[] = []
+  for (let i = 0; i < 4; i++) {
+    const from = new Date(start.getTime() + qMs * i)
+    const to =
+      i === 3 ? end : new Date(Math.floor(start.getTime() + qMs * (i + 1)) - 24 * 60 * 60 * 1000)
+    ranges.push(`${fmtDate(from)} - ${fmtDate(to)}`)
+  }
+  return ranges
+}
+
+function fmtDate(d: Date): string {
+  return d.toLocaleDateString('en-GB')
+}
+
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100
+}
+
+function eur(n: number): string {
+  return new Intl.NumberFormat('nl-BE', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(n)
 }
 
 function OptionRow(props: {

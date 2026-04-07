@@ -28,8 +28,9 @@ function BracketLines(props: { breakdown: TaxSummary['federalGrossTaxUser'] }) {
   )
 }
 
-export function Step14TaxSummary(props: { summary: TaxSummary }) {
+export function Step14TaxSummary(props: { summary: TaxSummary; showCta?: boolean }) {
   const s = props.summary
+  const showCta = props.showCta ?? true
 
   const netTaxableIncome =
     s.federalGrossTaxUser.taxableIncome + s.federalGrossTaxPartner.taxableIncome
@@ -52,6 +53,11 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
   const federalAfterWithholding = round2(
     s.federalTaxTotal - s.userWithholdingTax - s.partnerWithholdingTax
   )
+  const quarterlyFinalBalance = buildQuarterSplit(s.finalBalance)
+  const quarterlyAdvance = buildAdvanceQuarterPlan({
+    annualTotal: s.advanceTaxPayments,
+    mode: s.advanceTaxPaymentsMode,
+  })
 
   return (
     <div className="space-y-6">
@@ -536,17 +542,98 @@ export function Step14TaxSummary(props: { summary: TaxSummary }) {
         )}
       </div>
 
-      <div className="pt-2">
-        <Button type="button" className="w-full" size="md">
-          Get started
-        </Button>
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Quarter-wise breakdown</h3>
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4 text-sm">
+          {quarterlyFinalBalance.map((q, idx) => {
+            const advance = quarterlyAdvance[idx].amount
+            return (
+              <div
+                key={q.label}
+                className="grid grid-cols-1 gap-1 rounded-lg border border-border/70 bg-secondary/30 p-3 md:grid-cols-4 md:items-center"
+              >
+                <div className="font-medium text-foreground">{q.label}</div>
+                <div className="text-muted-foreground">
+                  Estimated final result share: {eur(q.amount)}
+                </div>
+                <div className="text-muted-foreground">Planned advance: {eur(-advance)}</div>
+                <div className="font-medium text-foreground">
+                  {q.amount > 0 ? 'Payable' : 'In your favour'}: {eur(q.amount)}
+                </div>
+              </div>
+            )
+          })}
+          <div className="text-xs text-muted-foreground">
+            Quarter shares are computed from the final result ({eur(s.finalBalance)}), not from
+            pre-credit tax totals. Advance payment mode: <b>{s.advanceTaxPaymentsMode}</b>.
+          </div>
+        </div>
       </div>
+
+      {showCta ? (
+        <div className="pt-2">
+          <Button type="button" className="w-full" size="md">
+            Get started
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100
+}
+
+function buildQuarterSplit(
+  totalAmount: number
+): Array<{ label: 'Q1' | 'Q2' | 'Q3' | 'Q4'; amount: number }> {
+  const total = round2(totalAmount)
+  const per = round2(total / 4)
+  const q2 = per
+  const q3 = per
+  const q4 = per
+  const q1 = round2(total - q2 - q3 - q4)
+  return [
+    { label: 'Q1', amount: q1 },
+    { label: 'Q2', amount: q2 },
+    { label: 'Q3', amount: q3 },
+    { label: 'Q4', amount: q4 },
+  ]
+}
+
+function buildAdvanceQuarterPlan(params: {
+  annualTotal: number
+  mode: TaxSummary['advanceTaxPaymentsMode']
+}): Array<{ label: 'Q1' | 'Q2' | 'Q3' | 'Q4'; amount: number }> {
+  const total = round2(Math.max(0, params.annualTotal))
+  if (total <= 0 || params.mode === 'none') {
+    return [
+      { label: 'Q1', amount: 0 },
+      { label: 'Q2', amount: 0 },
+      { label: 'Q3', amount: 0 },
+      { label: 'Q4', amount: 0 },
+    ]
+  }
+  if (params.mode === 'optimize') {
+    return [
+      { label: 'Q1', amount: total },
+      { label: 'Q2', amount: 0 },
+      { label: 'Q3', amount: 0 },
+      { label: 'Q4', amount: 0 },
+    ]
+  }
+  const per = round2(total / 4)
+  const q2 = per
+  const q3 = per
+  const q4 = per
+  const q1 = round2(total - q2 - q3 - q4)
+  return [
+    { label: 'Q1', amount: q1 },
+    { label: 'Q2', amount: q2 },
+    { label: 'Q3', amount: q3 },
+    { label: 'Q4', amount: q4 },
+  ]
 }
 
 function SummaryRow({

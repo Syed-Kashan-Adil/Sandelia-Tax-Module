@@ -92,12 +92,22 @@ export function TaxWizard() {
             const primary =
               values.companyDirectors.find((d) => d.id === values.companyPrimaryDirectorId) ??
               values.companyDirectors[0]
-            const mrRemuneration = primary ? primary.monthlySalary * 12 : 0
+            const mrRemuneration =
+              (primary ? primary.monthlySalary * 12 : 0) + (primary ? primary.expectedDividend : 0)
             const mrLumpSum = primary ? primary.lumpSumExpensesAnnual : 0
             const mrWithholding = primary ? primary.withholdingTaxAnnual : 0
-            const partnerNet = Math.max(0, values.companyPartnerGrossSalary - 5750)
-            const withholdingTotal = mrWithholding + values.companyPartnerWithholdingTax
-            const socialAnnual = values.companySocialPaidAmount
+            const partnerGross = Math.max(
+              0,
+              values.partnerIncome > 0 ? values.partnerIncome : values.companyPartnerGrossSalary
+            )
+            const partnerWithholding = Math.max(
+              0,
+              Math.max(values.partnerWithholdingTax, values.companyPartnerWithholdingTax)
+            )
+            const socialAnnual =
+              values.companySocialPaidBy === 'company'
+                ? Math.max(0, values.companySocialPaidAmount)
+                : 0
 
             return calculateTaxSummary({
               ...values,
@@ -107,14 +117,17 @@ export function TaxWizard() {
               estimatedSelfEmployedProfit: mrRemuneration,
               estimatedProfessionalExpenses: mrLumpSum,
               isSocialContributionsExempt: values.companyIsSocialContributionsExempt,
-              currentQuarterlySocialContribution: socialAnnual > 0 ? socialAnnual / 4 : 0,
+              currentQuarterlySocialContribution: 0,
               socialContributionsOverride: socialAnnual > 0 ? socialAnnual : null,
-              partnerIncome: partnerNet,
+              partnerIncome: partnerGross,
+              partnerWithholdingTaxMode: 'known',
+              partnerWithholdingTax: partnerWithholding,
               withholdingTaxMode: 'known',
-              withholdingTax: withholdingTotal,
-              hasSalariedIncome: true,
+              withholdingTax: mrWithholding,
+              hasSalariedIncome: false,
               salariedIncome: 0,
-              applyEmployeeProfessionalExpensesLumpSum: true,
+              applyEmployeeProfessionalExpensesLumpSum: false,
+              employeeProfessionalExpensesLumpSumOverride: null,
             })
           })()
         : null,

@@ -287,6 +287,7 @@ export interface TaxSummary {
   partnerSelfEmployedSocialContributions: number;
   partnerSelfEmployedNetForIpp: number;
 
+  advanceTaxPaymentsMode: TaxOnboardingValues["advanceTaxPaymentsMode"];
   advanceTaxPayments: number;
 
   /** Advance payment penalty interest (self-employed) */
