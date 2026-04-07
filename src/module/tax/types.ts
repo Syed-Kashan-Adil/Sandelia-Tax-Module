@@ -237,6 +237,8 @@ export interface TaxSummary {
   salariedIncome: number;
   /** Turnover (or extrapolated/YTD income) minus professional expenses — before social contributions */
   selfEmployedProfit: number;
+  /** Professional expenses deducted from self-employed gross income to reach selfEmployedProfit. */
+  selfEmployedProfessionalExpenses: number;
   /** Self-employed profit minus deductible social contributions (IPP input before marital quotient / allowances) */
   selfEmployedNetForIpp: number;
   otherIncome: number;

@@ -25,7 +25,13 @@ export function Step9SalariedIncome() {
           <ToggleOption
             label="Yes"
             checked={hasSalariedIncome}
-            onChange={() => setValues({ hasSalariedIncome: true })}
+            onChange={() =>
+              setValues({
+                hasSalariedIncome: true,
+                // overestimates net taxable employment income.
+                applyEmployeeProfessionalExpensesLumpSum: true,
+              })
+            }
           />
           <ToggleOption
             label="No"
