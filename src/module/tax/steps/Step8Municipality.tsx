@@ -18,6 +18,13 @@ const MUNICIPALITY_SUGGESTIONS = [
   'Overijse',
 ]
 
+function prettyMunicipalityFromKey(key: string): string {
+  return key
+    .split('-')
+    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
+    .join(' ')
+}
+
 export function Step8Municipality() {
   const municipality = useTaxOnboardingStore((s) => s.values.municipality)
   const municipalityRateOverride = useTaxOnboardingStore((s) => s.values.municipalityRateOverride)
@@ -48,9 +55,7 @@ export function Step8Municipality() {
           {Array.from(
             new Set([
               ...MUNICIPALITY_SUGGESTIONS,
-              ...Object.keys(MUNICIPAL_SURCHARGE_RATES).map((k) =>
-                k.replace(/\b\w/g, (c) => c.toUpperCase())
-              ),
+              ...Object.keys(MUNICIPAL_SURCHARGE_RATES).map(prettyMunicipalityFromKey),
             ])
           )
             .sort()

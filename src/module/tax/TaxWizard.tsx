@@ -2,6 +2,7 @@ import { RotateCcw } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { calculateCompanyTaxSummary, calculateTaxSummary } from './calculator'
+import { IPP_2026 } from './constants'
 import { COMPANY_WIZARD_STEP_LOGIC, TAX_WIZARD_STEP_LOGIC } from './stepLogic'
 import { Step1TaxSubject } from './steps/Step1TaxSubject'
 import { Step2CompanyFiscalYearInfo } from './steps/Step2CompanyFiscalYearInfo'
@@ -94,7 +95,17 @@ export function TaxWizard() {
               values.companyDirectors[0]
             const mrRemuneration =
               (primary ? primary.monthlySalary * 12 : 0) + (primary ? primary.expectedDividend : 0)
-            const mrLumpSum = primary ? primary.lumpSumExpensesAnnual : 0
+            const socialAnnualFromInputs =
+              values.companySocialPaidBy === 'company'
+                ? Math.max(0, values.companySocialPaidAmount)
+                : (primary?.socialContributionOverrideAnnual ?? 0)
+            const directorDeductionBase = Math.max(0, mrRemuneration - socialAnnualFromInputs)
+            const directorLumpSumLegal = Math.min(
+              IPP_2026.professionalExpenses.companyDirectorLumpSumMax,
+              directorDeductionBase * 0.03,
+              directorDeductionBase
+            )
+            const mrLumpSum = Math.round((directorLumpSumLegal + Number.EPSILON) * 100) / 100
             const mrWithholding = primary ? primary.withholdingTaxAnnual : 0
             const partnerGross = Math.max(
               0,
@@ -124,10 +135,13 @@ export function TaxWizard() {
               partnerWithholdingTax: partnerWithholding,
               withholdingTaxMode: 'known',
               withholdingTax: mrWithholding,
-              hasSalariedIncome: false,
-              salariedIncome: 0,
-              applyEmployeeProfessionalExpensesLumpSum: false,
-              employeeProfessionalExpensesLumpSumOverride: null,
+              hasSalariedIncome: values.hasSalariedIncome,
+              salariedIncome: values.salariedIncome,
+              applyEmployeeProfessionalExpensesLumpSum:
+                values.hasSalariedIncome && values.applyEmployeeProfessionalExpensesLumpSum,
+              employeeProfessionalExpensesLumpSumOverride: values.hasSalariedIncome
+                ? values.employeeProfessionalExpensesLumpSumOverride
+                : null,
             })
           })()
         : null,
