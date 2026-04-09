@@ -12,9 +12,17 @@ function eur(n: number): string {
 export function Step6CompanySummary(props: {
   summary: CompanyTaxSummary
   personalSummary: TaxSummary | null
+  directorFlatRateDetails?: {
+    grossProfessionalIncome: number
+    socialContributionsDeducted: number
+    rate: number
+    cap: number
+    flatRateApplied: number
+  } | null
 }) {
   const s = props.summary
   const p = props.personalSummary
+  const d = props.directorFlatRateDetails
 
   return (
     <div className="space-y-6">
@@ -98,6 +106,34 @@ export function Step6CompanySummary(props: {
           <h3 className="mb-3 text-sm font-semibold text-foreground">
             Personal tax calculation (IPP side)
           </h3>
+          {d ? (
+            <div className="mb-3 rounded-lg border border-border bg-secondary/30 p-3 text-sm">
+              <div className="mb-2 font-medium text-foreground">
+                Director flat-rate professional expenses (3% rule)
+              </div>
+              <div className="space-y-1">
+                <Row label="Gross professional income" value={eur(d.grossProfessionalIncome)} />
+                <Row
+                  label="Social contributions deducted before 3%"
+                  value={eur(-d.socialContributionsDeducted)}
+                />
+                <Row
+                  label={`3% on net base (${(d.rate * 100).toFixed(0)}%)`}
+                  value={eur(
+                    Math.max(0, d.grossProfessionalIncome - d.socialContributionsDeducted) * d.rate
+                  )}
+                />
+                <Row label="Legal cap" value={eur(d.cap)} />
+                <div className="border-t border-border pt-2">
+                  <Row
+                    label="Flat-rate applied as professional expenses"
+                    value={eur(-d.flatRateApplied)}
+                    strong
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="rounded-lg border border-border bg-card p-4">
             <Step14TaxSummary summary={p} showCta={false} />
           </div>

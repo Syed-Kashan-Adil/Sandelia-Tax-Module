@@ -26,7 +26,7 @@ export function Step3CompanyEstimatedProfit() {
       </Field>
       <Field
         label="Enter manual amount"
-        hint="Taxable profit amount to apply directly for ISOC rate computation."
+        hint="Accounting result entered manually. DNA is added back and carried-forward losses are deducted before ISOC rates are applied."
       >
         <Input
           type="number"

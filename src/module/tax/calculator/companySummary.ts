@@ -72,19 +72,17 @@ export function calculateCompanyTaxSummary(values: TaxOnboardingValues): Company
   const isFinancialCompany = values.companyIsFinancialCompany
   const reducedRateEligible = isSme && hasDirectorRemunerationCondition && !isFinancialCompany
 
-  const accountingResult = roundToCents(revenue - expenses)
+  const detailedAccountingResult = roundToCents(revenue - expenses)
+  const accountingResult =
+    values.companyEstimatedTaxableProfitMode === 'manual'
+      ? roundToCents(clampNonNegative(values.companyEstimatedTaxableProfit))
+      : detailedAccountingResult
   const taxResultBeforeLosses = roundToCents(accountingResult + dna)
   const carriedForwardLossUsed = roundToCents(
     taxResultBeforeLosses > 0 ? Math.min(lossCarryForward, taxResultBeforeLosses) : 0
   )
   const carriedForwardLossRemaining = roundToCents(lossCarryForward - carriedForwardLossUsed)
-  const detailedTaxableProfit = roundToCents(
-    Math.max(0, taxResultBeforeLosses - carriedForwardLossUsed)
-  )
-  const taxableProfit =
-    values.companyEstimatedTaxableProfitMode === 'manual'
-      ? roundToCents(clampNonNegative(values.companyEstimatedTaxableProfit))
-      : detailedTaxableProfit
+  const taxableProfit = roundToCents(Math.max(0, taxResultBeforeLosses - carriedForwardLossUsed))
 
   let isocAt20 = 0
   let isocAt25 = 0
