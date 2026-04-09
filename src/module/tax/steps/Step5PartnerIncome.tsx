@@ -1,12 +1,11 @@
 import { useTaxOnboardingStore } from '../store'
 import { Field } from '../ui/Field'
 import { Input } from '../ui/Input'
+import { Select } from '../ui/Select'
 
 export function Step5PartnerIncome() {
-  // const taxSubject = useTaxOnboardingStore((s) => s.values.taxSubject)
   const maritalStatus = useTaxOnboardingStore((s) => s.values.maritalStatus)
-  const partnerIncome = useTaxOnboardingStore((s) => s.values.partnerIncome)
-  const partnerWithholdingTax = useTaxOnboardingStore((s) => s.values.partnerWithholdingTax)
+  const values = useTaxOnboardingStore((s) => s.values)
   const setValues = useTaxOnboardingStore((s) => s.setValues)
 
   const enabled = maritalStatus === 'married' || maritalStatus === 'legally-cohabiting'
@@ -20,45 +19,259 @@ export function Step5PartnerIncome() {
         </div>
       ) : null}
 
-      <Field
-        label="Partner income (annual gross salary)"
-        hint="Married couples: this value is treated as salary under the lump-sum professional expenses system."
-      >
-        <Input
-          type="number"
-          inputMode="decimal"
-          min={0}
-          value={partnerIncome}
-          onChange={(e) => setValues({ partnerIncome: Number(e.target.value || 0) })}
+      <Field label="What type of income does your partner have?">
+        <Select
+          value={values.partnerIncomeType}
+          onChange={(e) =>
+            setValues({ partnerIncomeType: e.target.value as typeof values.partnerIncomeType })
+          }
           disabled={!enabled}
-        />
+        >
+          <option value="employee">Employee</option>
+          <option value="self-employed-main">Self-employed (main activity)</option>
+          <option value="self-employed-secondary">Self-employed (secondary activity)</option>
+          <option value="company-director">Company director</option>
+          <option value="assisting-spouse">Assisting spouse</option>
+        </Select>
       </Field>
 
-      {/* {taxSubject === 'company' ? (
-        <Field
-          label="Partner withholding tax (annual)"
-          hint="Tax already deducted from partner salary (used in detailed company summary)."
+      {values.partnerIncomeType === 'employee' ? (
+        <>
+          <Field label="Partner gross taxable income (Form 281.10)">
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              value={values.partnerSalariedIncome}
+              onChange={(e) =>
+                setValues({
+                  partnerSalariedIncome: Number(e.target.value || 0),
+                  partnerIncome: Number(e.target.value || 0),
+                  partnerHasSalariedIncome: true,
+                  partnerHasSelfEmployedIncome: false,
+                })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner withholding tax (€)">
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              value={values.partnerWithholdingTax}
+              onChange={(e) => setValues({ partnerWithholdingTax: Number(e.target.value || 0) })}
+              disabled={!enabled}
+            />
+          </Field>
+        </>
+      ) : null}
+
+      {values.partnerIncomeType === 'self-employed-main' ? (
+        <>
+          <Field label="Partner self-employed income">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerEstimatedSelfEmployedIncome}
+              onChange={(e) =>
+                setValues({
+                  partnerEstimatedSelfEmployedIncome: Number(e.target.value || 0),
+                  partnerHasSelfEmployedIncome: true,
+                  partnerHasSalariedIncome: false,
+                })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner professional expenses">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerEstimatedProfessionalExpenses}
+              onChange={(e) =>
+                setValues({ partnerEstimatedProfessionalExpenses: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner social contributions (annual)">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerSocialContributionsAnnual}
+              onChange={(e) =>
+                setValues({ partnerSocialContributionsAnnual: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+        </>
+      ) : null}
+
+      {values.partnerIncomeType === 'self-employed-secondary' ? (
+        <>
+          <Field label="Partner employment income">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerEmploymentIncomeForSecondaryActivity}
+              onChange={(e) =>
+                setValues({
+                  partnerEmploymentIncomeForSecondaryActivity: Number(e.target.value || 0),
+                  partnerHasSalariedIncome: true,
+                })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner self-employed income">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerEstimatedSelfEmployedIncome}
+              onChange={(e) =>
+                setValues({
+                  partnerEstimatedSelfEmployedIncome: Number(e.target.value || 0),
+                  partnerHasSelfEmployedIncome: true,
+                })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner professional expenses">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerEstimatedProfessionalExpenses}
+              onChange={(e) =>
+                setValues({ partnerEstimatedProfessionalExpenses: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner social contributions (annual)">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerSocialContributionsAnnual}
+              onChange={(e) =>
+                setValues({ partnerSocialContributionsAnnual: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+        </>
+      ) : null}
+
+      {values.partnerIncomeType === 'company-director' ? (
+        <>
+          <Field label="Partner director remuneration">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerCompanyDirectorRemuneration}
+              onChange={(e) =>
+                setValues({ partnerCompanyDirectorRemuneration: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner withholding tax (€)">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerWithholdingTax}
+              onChange={(e) => setValues({ partnerWithholdingTax: Number(e.target.value || 0) })}
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner social contributions (annual)">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerCompanyDirectorSocialContributionsAnnual}
+              onChange={(e) =>
+                setValues({
+                  partnerCompanyDirectorSocialContributionsAnnual: Number(e.target.value || 0),
+                })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+        </>
+      ) : null}
+
+      {values.partnerIncomeType === 'assisting-spouse' ? (
+        <>
+          <Field label="Assisting spouse regime">
+            <Select
+              value={values.partnerAssistingSpouseStatus}
+              onChange={(e) =>
+                setValues({
+                  partnerAssistingSpouseStatus: e.target.value as typeof values.partnerAssistingSpouseStatus,
+                })
+              }
+              disabled={!enabled}
+            >
+              <option value="assisting-spouse-maxi">Assisting spouse (maxi)</option>
+              <option value="assisting-spouse-mini">Assisting spouse (mini)</option>
+            </Select>
+          </Field>
+          <Field label="Partner assisting spouse income">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerEstimatedSelfEmployedIncome}
+              onChange={(e) =>
+                setValues({ partnerEstimatedSelfEmployedIncome: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner professional expenses">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerEstimatedProfessionalExpenses}
+              onChange={(e) =>
+                setValues({ partnerEstimatedProfessionalExpenses: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+          <Field label="Partner social contributions (annual)">
+            <Input
+              type="number"
+              min={0}
+              value={values.partnerSocialContributionsAnnual}
+              onChange={(e) =>
+                setValues({ partnerSocialContributionsAnnual: Number(e.target.value || 0) })
+              }
+              disabled={!enabled}
+            />
+          </Field>
+        </>
+      ) : null}
+
+      <Field label="Partner withholding tax mode">
+        <Select
+          value={values.partnerWithholdingTaxMode}
+          onChange={(e) =>
+            setValues({ partnerWithholdingTaxMode: e.target.value as 'known' | 'unknown' })
+          }
+          disabled={!enabled}
         >
-          <Input
-            type="number"
-            inputMode="decimal"
-            min={0}
-            value={partnerWithholdingTax}
-            onChange={(e) =>
-              setValues({
-                companyPartnerWithholdingTax: Number(e.target.value || 0),
-              })
-            }
-            disabled={!enabled}
-          />
-        </Field>
-      ) : null} */}
-      <Field label="Partner withholding tax (€)">
+          <option value="known">Known</option>
+          <option value="unknown">Unknown</option>
+        </Select>
+      </Field>
+      <Field label="Fallback partner withholding tax (€)">
         <Input
           type="number"
           inputMode="decimal"
           min={0}
-          value={partnerWithholdingTax}
+          value={values.partnerWithholdingTax}
           onChange={(e) => setValues({ partnerWithholdingTax: Number(e.target.value || 0) })}
           disabled={!enabled}
         />

@@ -94,7 +94,10 @@ export function computeHouseholdAllowance(params: {
       ? (IPP_2026.dependentsAllowance.singleParentWithDependentChild ?? 0)
       : 0
   const otherDependentsAllowance = computeOtherDependentsAllowance(params.otherDependents)
-  const ageAllowanceSelf = computeAgeAllowance(params.userDateOfBirthIso)
+  // Temporarily disabled: age allowance is under review and should not affect simulation totals.
+  // Keep code path in place for easy re-enable once legal conditions are finalized.
+  const ENABLE_AGE_ALLOWANCE = false
+  const ageAllowanceSelf = ENABLE_AGE_ALLOWANCE ? computeAgeAllowance(params.userDateOfBirthIso) : 0
 
   const totalAllowanceHousehold = roundToCents(
     clampNonNegative(

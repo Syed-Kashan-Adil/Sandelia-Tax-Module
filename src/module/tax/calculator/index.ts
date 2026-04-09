@@ -42,6 +42,15 @@ function buildMaritalSplittingNote(params: {
   return 'No marital income transfer calculated.'
 }
 
+function computeDirectorFlatRate(params: { grossIncome: number; socialContributionsAnnual: number }): number {
+  const base = roundToCents(
+    clampNonNegative(clampNonNegative(params.grossIncome) - clampNonNegative(params.socialContributionsAnnual))
+  )
+  return roundToCents(
+    Math.min(base * 0.03, IPP_2026.professionalExpenses.companyDirectorLumpSumMax, base)
+  )
+}
+
 export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const salariedIncome = values.hasSalariedIncome ? values.salariedIncome : 0
   const withholdingTax = values.withholdingTaxMode === 'unknown' ? 0 : values.withholdingTax
@@ -56,89 +65,132 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     clampNonNegative(clampNonNegative(salariedIncome) - userEmployeeLumpSumDeduction)
   )
 
-  // Partner professional income:
-  // - if partner self-employed flag is set → treat as self-employed
-  // - otherwise → treat `partnerIncome` as salaried gross salary under the lump-sum system
-  //   (this matches the simple partner step where you only enter income + withholding tax).
-  const partnerTreatAsSalary = !values.partnerHasSelfEmployedIncome
+  const partnerWithholdingTax =
+    values.partnerWithholdingTaxMode === 'unknown' ? 0 : values.partnerWithholdingTax
+  // 1) Primary taxpayer professional profile (same engine shape as partner).
+  const annualTurnoverOrProfessionalIncome = computeEstimatedAnnualProfessionalIncome(values)
+  const professionalExpenses = roundToCents(clampNonNegative(values.estimatedProfessionalExpenses))
+  const defaultSelfEmployedProfit = roundToCents(
+    clampNonNegative(clampNonNegative(annualTurnoverOrProfessionalIncome) - professionalExpenses)
+  )
+  const isPrimaryDirector = values.selfEmployedStatus === 'company-director'
+  const primaryDirectorRemuneration = roundToCents(clampNonNegative(values.companyDirectorRemuneration))
+  const primaryDirectorSocial = roundToCents(
+    clampNonNegative(values.companyDirectorSocialContributionsAnnual)
+  )
+  const primaryDirectorFlatRate = computeDirectorFlatRate({
+    grossIncome: primaryDirectorRemuneration,
+    socialContributionsAnnual: primaryDirectorSocial,
+  })
+  const selfEmployedProfit = isPrimaryDirector
+    ? roundToCents(clampNonNegative(primaryDirectorRemuneration - primaryDirectorFlatRate))
+    : defaultSelfEmployedProfit
 
+  const socialContributions = isPrimaryDirector
+    ? {
+        status: 'company-director' as const,
+        baseIncome: primaryDirectorRemuneration,
+        legalAnnualBeforeFees: primaryDirectorSocial,
+        fundFeeRate: 0,
+        annualAmount: primaryDirectorSocial,
+        quarterlyAmount: roundToCents(primaryDirectorSocial / 4),
+        method: 'override' as const,
+      }
+    : computeSocialContributions({
+        status: values.selfEmployedStatus,
+        annualNetIncome: selfEmployedProfit,
+        overrideAnnualAmount: values.isSocialContributionsExempt
+          ? 0
+          : values.currentQuarterlySocialContribution > 0
+            ? values.currentQuarterlySocialContribution * 4
+            : values.socialContributionsOverride,
+        socialInsuranceFund: values.socialInsuranceFund,
+        studentSocialExemption: values.studentSocialExemption,
+      })
+
+  const selfEmployedNetForIpp = isPrimaryDirector
+    ? roundToCents(clampNonNegative(primaryDirectorRemuneration - primaryDirectorSocial))
+    : roundToCents(clampNonNegative(selfEmployedProfit - socialContributions.annualAmount))
+
+  const userProfessionalIncome = roundToCents(userSalaryAfterExpenses + selfEmployedNetForIpp)
+
+  // 2) Partner profile using same logic model.
   const partnerSalariedIncomeGross = roundToCents(
     clampNonNegative(
-      values.partnerHasSalariedIncome
-        ? values.partnerSalariedIncome
-        : partnerTreatAsSalary
-          ? values.partnerIncome
+      values.partnerIncomeType === 'employee'
+        ? values.partnerSalariedIncome > 0
+          ? values.partnerSalariedIncome
+          : values.partnerIncome
+        : values.partnerIncomeType === 'self-employed-secondary'
+          ? values.partnerEmploymentIncomeForSecondaryActivity
           : 0
     )
   )
-
   const partnerEmployeeLumpSumDeduction = effectiveEmployeeLumpSumDeduction({
-    grossSalary: partnerTreatAsSalary ? partnerSalariedIncomeGross : 0,
-    applyLumpSum: values.partnerHasSalariedIncome
-      ? values.partnerApplyEmployeeProfessionalExpensesLumpSum
-      : partnerTreatAsSalary,
-    overrideEuro: values.partnerHasSalariedIncome
-      ? values.partnerEmployeeProfessionalExpensesLumpSumOverride
-      : null,
+    grossSalary: partnerSalariedIncomeGross,
+    applyLumpSum: partnerSalariedIncomeGross > 0 ? values.partnerApplyEmployeeProfessionalExpensesLumpSum : false,
+    overrideEuro: values.partnerEmployeeProfessionalExpensesLumpSumOverride,
   })
-
   const partnerSalaryAfterExpenses = roundToCents(
     clampNonNegative(partnerSalariedIncomeGross - partnerEmployeeLumpSumDeduction)
   )
 
-  const partnerWithholdingTax =
-    values.partnerWithholdingTaxMode === 'unknown' ? 0 : values.partnerWithholdingTax
-
-  const partnerSelfEmployedGross = values.partnerHasSelfEmployedIncome
-    ? roundToCents(clampNonNegative(values.partnerEstimatedSelfEmployedIncome))
-    : 0
-  const partnerSelfEmployedExpenses = values.partnerHasSelfEmployedIncome
-    ? roundToCents(clampNonNegative(values.partnerEstimatedProfessionalExpenses))
-    : 0
-  const partnerSelfEmployedSocialContributions = values.partnerHasSelfEmployedIncome
-    ? roundToCents(clampNonNegative(values.partnerSocialContributionsAnnual))
-    : 0
-  const partnerSelfEmployedNetForIpp = roundToCents(
+  const partnerSelfEmployedGross = roundToCents(
     clampNonNegative(
-      partnerSelfEmployedGross -
-        partnerSelfEmployedExpenses -
-        partnerSelfEmployedSocialContributions
+      values.partnerIncomeType === 'self-employed-main' ||
+        values.partnerIncomeType === 'self-employed-secondary' ||
+        values.partnerIncomeType === 'assisting-spouse'
+        ? values.partnerEstimatedSelfEmployedIncome
+        : 0
     )
   )
-
-  // 1. Professional income: turnover (or YTD extrapolation / manual entry) − expenses = profit
-  const annualTurnoverOrProfessionalIncome = computeEstimatedAnnualProfessionalIncome(values)
-  const professionalExpenses = roundToCents(clampNonNegative(values.estimatedProfessionalExpenses))
-  const selfEmployedProfit = roundToCents(
-    clampNonNegative(clampNonNegative(annualTurnoverOrProfessionalIncome) - professionalExpenses)
+  const partnerSelfEmployedExpenses = roundToCents(
+    clampNonNegative(
+      values.partnerIncomeType === 'self-employed-main' ||
+        values.partnerIncomeType === 'self-employed-secondary' ||
+        values.partnerIncomeType === 'assisting-spouse'
+        ? values.partnerEstimatedProfessionalExpenses
+        : 0
+    )
   )
-
-  // 2. Social contributions on profit (fully deductible from taxable income for IPP)
-  const socialContributions = computeSocialContributions({
-    status: values.selfEmployedStatus,
-    annualNetIncome: selfEmployedProfit,
-    overrideAnnualAmount: values.isSocialContributionsExempt
-      ? 0
-      : values.currentQuarterlySocialContribution > 0
-        ? values.currentQuarterlySocialContribution * 4
-        : values.socialContributionsOverride,
-    socialInsuranceFund: values.socialInsuranceFund,
-    studentSocialExemption: values.studentSocialExemption,
+  const partnerSelfEmployedSocialContributions = roundToCents(
+    clampNonNegative(
+      values.partnerIncomeType === 'self-employed-main' ||
+        values.partnerIncomeType === 'self-employed-secondary' ||
+        values.partnerIncomeType === 'assisting-spouse'
+        ? values.partnerSocialContributionsAnnual
+        : 0
+    )
+  )
+  const partnerSelfEmployedNetForIpp = roundToCents(
+    clampNonNegative(
+      partnerSelfEmployedGross - partnerSelfEmployedExpenses - partnerSelfEmployedSocialContributions
+    )
+  )
+  const partnerCompanyDirectorRemuneration = roundToCents(
+    clampNonNegative(values.partnerCompanyDirectorRemuneration)
+  )
+  const partnerCompanyDirectorSocialContributions = roundToCents(
+    clampNonNegative(values.partnerCompanyDirectorSocialContributionsAnnual)
+  )
+  const partnerCompanyDirectorFlatRate = computeDirectorFlatRate({
+    grossIncome: partnerCompanyDirectorRemuneration,
+    socialContributionsAnnual: partnerCompanyDirectorSocialContributions,
   })
-
-  const deductibleSocialAnnual = socialContributions.annualAmount
-
-  // 3. Net taxable self-employed slice for IPP (before marital quotient)
-  const selfEmployedNetForIpp = roundToCents(
-    clampNonNegative(selfEmployedProfit - deductibleSocialAnnual)
+  const partnerCompanyDirectorNetForIpp = roundToCents(
+    clampNonNegative(partnerCompanyDirectorRemuneration - partnerCompanyDirectorSocialContributions)
   )
-
-  // Salary is already reduced by lump-sum professional expenses where applicable.
-  const userProfessionalIncome = roundToCents(userSalaryAfterExpenses + selfEmployedNetForIpp)
+  const partnerDirectorProfessionalIncome = roundToCents(
+    clampNonNegative(partnerCompanyDirectorRemuneration - partnerCompanyDirectorFlatRate)
+  )
 
   const userIncome = roundToCents(userProfessionalIncome + clampNonNegative(values.otherIncome))
 
-  const partnerIncome = roundToCents(partnerSalaryAfterExpenses + partnerSelfEmployedNetForIpp)
+  const partnerIncome = roundToCents(
+    values.partnerIncomeType === 'company-director'
+      ? partnerDirectorProfessionalIncome
+      : partnerSalaryAfterExpenses + partnerSelfEmployedNetForIpp
+  )
   const householdIncome = roundToCents(userIncome + partnerIncome)
 
   const hasPartner =
@@ -361,12 +413,17 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     partnerWithholdingTax: roundToCents(clampNonNegative(partnerWithholdingTax)),
     userEmployeeLumpSumDeduction,
     partnerEmployeeLumpSumDeduction,
-    partnerHasSalariedIncomeDetailed: values.partnerHasSalariedIncome,
+    partnerHasSalariedIncomeDetailed:
+      values.partnerIncomeType === 'employee' || values.partnerIncomeType === 'self-employed-secondary',
+    partnerIncomeType: values.partnerIncomeType,
     partnerSalariedIncomeGross: partnerSalariedIncomeGross,
     partnerSelfEmployedGross: partnerSelfEmployedGross,
     partnerSelfEmployedExpenses: partnerSelfEmployedExpenses,
     partnerSelfEmployedSocialContributions: partnerSelfEmployedSocialContributions,
     partnerSelfEmployedNetForIpp,
+    partnerCompanyDirectorRemuneration,
+    partnerCompanyDirectorSocialContributions,
+    partnerCompanyDirectorNetForIpp,
     advanceTaxPaymentsMode: values.advanceTaxPaymentsMode,
     advanceTaxPayments,
     advancePaymentPenalty,

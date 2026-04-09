@@ -10,6 +10,12 @@ import { Field } from '../ui/Field'
 import { Input } from '../ui/Input'
 
 export function Step10EstimatedProfit() {
+  const selfEmployedStatus = useTaxOnboardingStore((s) => s.values.selfEmployedStatus)
+  const companyDirectorRemuneration = useTaxOnboardingStore((s) => s.values.companyDirectorRemuneration)
+  const companyDirectorSocialContributionsAnnual = useTaxOnboardingStore(
+    (s) => s.values.companyDirectorSocialContributionsAnnual
+  )
+  const withholdingTax = useTaxOnboardingStore((s) => s.values.withholdingTax)
   const activityStartDate = useTaxOnboardingStore((s) => s.values.activityStartDate)
   const profitEstimationMode = useTaxOnboardingStore((s) => s.values.profitEstimationMode)
   const estimatedSelfEmployedProfit = useTaxOnboardingStore(
@@ -38,6 +44,45 @@ export function Step10EstimatedProfit() {
       ytdProfessionalIncome,
     ]
   )
+
+  if (selfEmployedStatus === 'company-director') {
+    return (
+      <div className="space-y-6">
+        <Field
+          label="Company director remuneration (annual)"
+          hint="Gross director remuneration used for IPP company-director treatment."
+        >
+          <Input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            value={companyDirectorRemuneration}
+            onChange={(e) => setValues({ companyDirectorRemuneration: Number(e.target.value || 0) })}
+          />
+        </Field>
+        <Field label="Withholding tax on director remuneration (annual)">
+          <Input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            value={withholdingTax}
+            onChange={(e) => setValues({ withholdingTax: Number(e.target.value || 0) })}
+          />
+        </Field>
+        <Field label="Director social contributions (annual)">
+          <Input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            value={companyDirectorSocialContributionsAnnual}
+            onChange={(e) =>
+              setValues({ companyDirectorSocialContributionsAnnual: Number(e.target.value || 0) })
+            }
+          />
+        </Field>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

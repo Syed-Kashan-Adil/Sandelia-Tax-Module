@@ -38,6 +38,7 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
   activityType: "commercial",
   vatRegime: "yes-quarterly",
   maritalStatus: "single",
+  partnerIncomeType: "employee",
   partnerIncome: 0,
   partnerHasSalariedIncome: false,
   partnerSalariedIncome: 0,
@@ -49,6 +50,10 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
   partnerEstimatedSelfEmployedIncome: 0,
   partnerEstimatedProfessionalExpenses: 0,
   partnerSocialContributionsAnnual: 0,
+  partnerEmploymentIncomeForSecondaryActivity: 0,
+  partnerCompanyDirectorRemuneration: 0,
+  partnerCompanyDirectorSocialContributionsAnnual: 0,
+  partnerAssistingSpouseStatus: "assisting-spouse-maxi",
   children: [],
   otherDependents: {
     age65InDependencyCount: 0,
@@ -68,6 +73,8 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
   withholdingTaxMode: "known",
   applyEmployeeProfessionalExpensesLumpSum: true,
   employeeProfessionalExpensesLumpSumOverride: null,
+  companyDirectorRemuneration: 0,
+  companyDirectorSocialContributionsAnnual: 0,
   profitEstimationMode: "manual",
   estimatedSelfEmployedProfit: 0,
   estimatedProfessionalExpenses: 0,
@@ -246,6 +253,28 @@ export const useTaxOnboardingStore = create<TaxOnboardingState>()(
             p.values.companyDirectors ??
             defaultTaxOnboardingValues.companyDirectors,
         };
+        // Best-effort partner migration from legacy booleans/flat fields.
+        if (!p.values.partnerIncomeType) {
+          values.partnerIncomeType = p.values.partnerHasSelfEmployedIncome
+            ? "self-employed-main"
+            : "employee";
+        }
+        if (
+          values.partnerIncomeType === "employee" &&
+          values.partnerSalariedIncome <= 0 &&
+          values.partnerIncome > 0
+        ) {
+          values.partnerSalariedIncome = values.partnerIncome;
+          values.partnerHasSalariedIncome = true;
+        }
+        if (
+          values.partnerIncomeType === "self-employed-main" &&
+          values.partnerEstimatedSelfEmployedIncome <= 0 &&
+          values.partnerIncome > 0
+        ) {
+          values.partnerEstimatedSelfEmployedIncome = values.partnerIncome;
+          values.partnerHasSelfEmployedIncome = true;
+        }
         return { ...c, step: p.step ?? c.step, values } as TaxOnboardingState;
       },
     },

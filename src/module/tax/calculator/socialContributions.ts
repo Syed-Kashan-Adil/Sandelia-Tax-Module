@@ -130,6 +130,9 @@ function computeLegalAnnualBeforeFees(params: {
       return pensionerLegal(income)
     case 'student':
       return studentLegal(income, params.studentExempt)
+    case 'company-director':
+      // Directors use dedicated handling in IPP summary paths; fallback here mirrors main regime.
+      return legalMainSelfEmployed(income)
   }
 }
 

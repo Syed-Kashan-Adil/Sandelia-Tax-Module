@@ -4,10 +4,19 @@ export type SelfEmployedStatus =
   | "main"
   | "complementary"
   | "article37"
-  | "assisting-spouse-maxi"
-  | "assisting-spouse-mini"
   | "active-pensioner"
-  | "student";
+  | "student"
+  | "company-director"
+  // Kept for backward compatibility in persisted state/migration.
+  | "assisting-spouse-maxi"
+  | "assisting-spouse-mini";
+
+export type PartnerIncomeType =
+  | "employee"
+  | "self-employed-main"
+  | "self-employed-secondary"
+  | "company-director"
+  | "assisting-spouse";
 
 export type MaritalStatus =
   | "single"
@@ -60,6 +69,7 @@ export interface TaxOnboardingValues {
   maritalStatus: MaritalStatus;
 
   // Step 5
+  partnerIncomeType: PartnerIncomeType;
   partnerIncome: number;
   partnerHasSalariedIncome: boolean;
   partnerSalariedIncome: number;
@@ -71,6 +81,10 @@ export interface TaxOnboardingValues {
   partnerEstimatedSelfEmployedIncome: number;
   partnerEstimatedProfessionalExpenses: number;
   partnerSocialContributionsAnnual: number;
+  partnerEmploymentIncomeForSecondaryActivity: number;
+  partnerCompanyDirectorRemuneration: number;
+  partnerCompanyDirectorSocialContributionsAnnual: number;
+  partnerAssistingSpouseStatus: "assisting-spouse-maxi" | "assisting-spouse-mini";
 
   // Step 6 – Children
   children: DependentChildInput[];
@@ -105,6 +119,8 @@ export interface TaxOnboardingValues {
   withholdingTaxMode: "known" | "unknown";
   applyEmployeeProfessionalExpensesLumpSum: boolean;
   employeeProfessionalExpensesLumpSumOverride: number | null;
+  companyDirectorRemuneration: number;
+  companyDirectorSocialContributionsAnnual: number;
 
   // Step 10
   profitEstimationMode:
@@ -286,6 +302,10 @@ export interface TaxSummary {
   partnerSelfEmployedExpenses: number;
   partnerSelfEmployedSocialContributions: number;
   partnerSelfEmployedNetForIpp: number;
+  partnerIncomeType: TaxOnboardingValues["partnerIncomeType"];
+  partnerCompanyDirectorRemuneration: number;
+  partnerCompanyDirectorSocialContributions: number;
+  partnerCompanyDirectorNetForIpp: number;
 
   advanceTaxPaymentsMode: TaxOnboardingValues["advanceTaxPaymentsMode"];
   advanceTaxPayments: number;

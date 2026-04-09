@@ -20,10 +20,9 @@ export function Step2SelfEmployedStatus() {
           <option value="main">Main self-employed</option>
           <option value="complementary">Complementary self-employed</option>
           <option value="article37">Article 37</option>
-          <option value="assisting-spouse-maxi">Assisting spouse (maxi)</option>
-          <option value="assisting-spouse-mini">Assisting spouse (mini)</option>
           <option value="active-pensioner">Active pensioner</option>
           <option value="student">Student self-employed</option>
+          <option value="company-director">Company director</option>
         </Select>
       </Field>
     </div>

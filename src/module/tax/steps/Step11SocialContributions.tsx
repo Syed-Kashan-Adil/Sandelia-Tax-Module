@@ -43,6 +43,33 @@ export function Step11SocialContributions() {
     [status, netIncome, overrideAnnualAmount, fund, studentSocialExemption]
   )
 
+  if (status === 'company-director') {
+    const annual = Math.max(0, values.companyDirectorSocialContributionsAnnual)
+    const quarterly = annual / 4
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
+          Company director mode uses the annual director social contributions entered in the
+          previous step.
+        </div>
+        <Field label="Director social contributions (annual)">
+          <Input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            value={annual}
+            onChange={(e) =>
+              setValues({ companyDirectorSocialContributionsAnnual: Number(e.target.value || 0) })
+            }
+          />
+        </Field>
+        <Field label="Director social contributions (quarterly)">
+          <Input value={quarterly.toFixed(2)} disabled />
+        </Field>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {status === 'student' ? (

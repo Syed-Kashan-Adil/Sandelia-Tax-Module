@@ -111,13 +111,6 @@ export function TaxWizard() {
                     studentSocialExemption: false,
                   }).annualAmount)
             )
-          const directorDeductionBase = Math.max(0, mrRemuneration - socialAnnualFromInputs)
-          const directorLumpSumLegal = Math.min(
-            IPP_2026.professionalExpenses.companyDirectorLumpSumMax,
-            directorDeductionBase * 0.03,
-            directorDeductionBase
-          )
-          const mrLumpSum = Math.round((directorLumpSumLegal + Number.EPSILON) * 100) / 100
           const mrWithholding = primary ? primary.withholdingTaxAnnual : 0
           const partnerGross = Math.max(
             0,
@@ -132,14 +125,18 @@ export function TaxWizard() {
           return calculateTaxSummary({
             ...values,
             taxSubject: 'self-employed',
-            selfEmployedStatus: 'main',
+              selfEmployedStatus: 'company-director',
             profitEstimationMode: 'manual',
-            estimatedSelfEmployedProfit: mrRemuneration,
-            estimatedProfessionalExpenses: mrLumpSum,
+              companyDirectorRemuneration: mrRemuneration,
+              companyDirectorSocialContributionsAnnual: socialAnnual,
+              estimatedSelfEmployedProfit: 0,
+              estimatedProfessionalExpenses: 0,
             isSocialContributionsExempt: values.companyIsSocialContributionsExempt,
             currentQuarterlySocialContribution: 0,
-            socialContributionsOverride: socialAnnual > 0 ? socialAnnual : null,
+              socialContributionsOverride: null,
             partnerIncome: partnerGross,
+              partnerIncomeType: 'employee',
+              partnerSalariedIncome: partnerGross,
             partnerWithholdingTaxMode: 'known',
             partnerWithholdingTax: partnerWithholding,
             withholdingTaxMode: 'known',

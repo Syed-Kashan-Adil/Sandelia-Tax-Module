@@ -26,7 +26,8 @@ export const TAX_WIZARD_STEP_LOGIC: Record<number, StepLogicInfo> = {
   2: {
     title: "Self-employed status → contribution regime",
     bullets: [
-      "Status selects the social contribution regime (rates + minimums).",
+      "Status selects the social contribution regime (rates + minimums) or company-director treatment.",
+      "Assisting spouse status is partner-only and configured in the partner step.",
       "Feeds the social contributions estimate later in the flow.",
     ],
     sources: [

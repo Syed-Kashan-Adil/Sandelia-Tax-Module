@@ -103,6 +103,22 @@ export function Step14TaxSummary(props: { summary: TaxSummary; showCta?: boolean
               value={eur(s.partnerSalariedIncomeGross)}
             />
           ) : null}
+          {isCouple && s.partnerIncomeType === 'company-director' ? (
+            <>
+              <SummaryRow
+                label="Partner company director remuneration"
+                value={eur(s.partnerCompanyDirectorRemuneration)}
+              />
+              <SummaryRow
+                label="Partner company director social contributions"
+                value={eur(-s.partnerCompanyDirectorSocialContributions)}
+              />
+              <SummaryRow
+                label="Partner company director net for IPP"
+                value={eur(s.partnerCompanyDirectorNetForIpp)}
+              />
+            </>
+          ) : null}
           {isCouple && s.partnerEmployeeLumpSumDeduction > 0 ? (
             <SummaryRow
               label="Partner employee lump-sum professional expenses"
@@ -213,6 +229,14 @@ export function Step14TaxSummary(props: { summary: TaxSummary; showCta?: boolean
                     <span>Self-employed net (gross − expenses − contributions)</span>
                     <span className="font-medium text-foreground">
                       {eur(s.partnerSelfEmployedNetForIpp)}
+                    </span>
+                  </div>
+                ) : null}
+                {s.partnerIncomeType === 'company-director' ? (
+                  <div className="flex justify-between gap-4">
+                    <span>Company director net (after social contributions)</span>
+                    <span className="font-medium text-foreground">
+                      {eur(s.partnerCompanyDirectorNetForIpp)}
                     </span>
                   </div>
                 ) : null}
