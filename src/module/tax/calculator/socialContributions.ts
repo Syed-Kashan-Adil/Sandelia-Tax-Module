@@ -175,6 +175,16 @@ export function computeSocialContributions(params: {
     annualAmount = IPP_2026.socialContributions.publishedMainMinimumAnnualPartena
     quarterlyAmount = roundToCents(annualAmount / 4)
   }
+  // Active pensioner minimum plateau (Partena) is published as a quarterly amount.
+  // Keep that amount as quarterly and annualize by ×4.
+  if (
+    params.status === 'active-pensioner' &&
+    baseIncome <= b1 &&
+    params.socialInsuranceFund === 'partena'
+  ) {
+    quarterlyAmount = IPP_2026.socialContributions.publishedPensionerMinimumQuarterlyPartena
+    annualAmount = roundToCents(quarterlyAmount * 4)
+  }
 
   return {
     status: params.status,

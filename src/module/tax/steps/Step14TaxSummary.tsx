@@ -85,6 +85,12 @@ export function Step14TaxSummary(props: { summary: TaxSummary; showCta?: boolean
               value={eur(-s.socialContributions.annualAmount)}
             />
           ) : null}
+          {s.socialContributions.quarterlyAmount > 0 ? (
+            <SummaryRow
+              label="Your social contributions (per quarter)"
+              value={eur(-s.socialContributions.quarterlyAmount)}
+            />
+          ) : null}
           {s.selfEmployedNetForIpp > 0 ? (
             <SummaryRow
               label="Your self-employed net for IPP"
@@ -409,6 +415,12 @@ export function Step14TaxSummary(props: { summary: TaxSummary; showCta?: boolean
                       <span>Social contributions</span>
                       <span className="font-medium text-foreground">
                         {eur(-s.socialContributions.annualAmount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>Social contributions (per quarter)</span>
+                      <span className="font-medium text-foreground">
+                        {eur(-s.socialContributions.quarterlyAmount)}
                       </span>
                     </div>
                     <div className="flex justify-between gap-4">

@@ -161,6 +161,9 @@ export function Step11SocialContributions() {
         </div>
         <div className="mt-2 text-xs text-muted-foreground">
           If you entered a current quarterly payment, it is used as an override (quarterly × 4).
+          {fund === 'partena' ? (
+            <> Partena published scales are quarterly; annual is displayed as quarterly × 4.</>
+          ) : null}
           {calculated.method === 'calculated' ? (
             <>
               {' '}

@@ -84,11 +84,16 @@ export function Step6CompanySummary(props: {
             <div className="text-muted-foreground">No directors added.</div>
           ) : (
             s.directorsSocial.map((d) => (
-              <Row
-                key={d.directorId}
-                label={`${d.directorName} (base ${eur(d.annualIncomeBase)})`}
-                value={eur(d.annualContribution)}
-              />
+              <div key={d.directorId} className="space-y-1">
+                <Row
+                  label={`${d.directorName} annual social contribution (base ${eur(d.annualIncomeBase)})`}
+                  value={eur(d.annualContribution)}
+                />
+                <Row
+                  label={`${d.directorName} quarterly social contribution`}
+                  value={eur(d.quarterlyContribution)}
+                />
+              </div>
             ))
           )}
           <div className="border-t border-border pt-2">

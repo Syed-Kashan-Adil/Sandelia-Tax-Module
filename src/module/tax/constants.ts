@@ -95,6 +95,8 @@ export const IPP_2026 = {
       student: 394.04,
     },
     publishedMainMinimumAnnualPartena: 3711.28,
+    /** Partena published minimum for active pensioners (quarterly amount, income year 2026). */
+    publishedPensionerMinimumQuarterlyPartena: 191.47,
     fundFeeRates: {
       partena: 0.042,
       xerius: 0.0305,
