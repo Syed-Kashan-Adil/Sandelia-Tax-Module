@@ -72,7 +72,8 @@ export const IPP_2026 = {
       b1: 17374.08,
       b2: 75024.54,
       b3: 110562.42,
-      article37Switch: 9101.26,
+      article37LowerThreshold: 8687.03,
+      article37UpperThreshold: 17374.08,
       assistingSpouseMaxiUpToIncome: 7632.44,
       studentZone1Max: 8687.03,
       studentZone2Max: 17374.08,
@@ -82,6 +83,7 @@ export const IPP_2026 = {
     rates: {
       rateMain: 0.205,
       rateHighBand: 0.1416,
+      article37Rate: 0.05125,
       pensionerLow: 0.03675,
       pensionerHigh: 0.0354,
       assistingSpouseMiniLow: 0.0079,

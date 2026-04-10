@@ -83,19 +83,18 @@ function assistingSpouseMiniLegal(income: number): number {
   return roundToCents(first + second)
 }
 
-function studentLegal(income: number, exempt: boolean): number {
-  const m = IPP_2026.socialContributions.minimumBaseAnnual
+function studentLegal(income: number): number {
   const { studentZone1Max, studentZone2Max } = IPP_2026.socialContributions.boundaries
-  const { rateMain } = IPP_2026.socialContributions.rates
+  const { article37Rate } = IPP_2026.socialContributions.rates
   const inc = roundToCents(clampNonNegative(income))
-  if (inc <= studentZone1Max) {
-    if (exempt) return 0
-    return m.student
-  }
-  if (inc <= studentZone2Max) {
+  // Student self-employed (2025/2026 simulator policy):
+  // - below lower threshold: 0
+  // - between thresholds: (income - threshold) × 5.125% annually
+  // - above upper threshold: switch to main regime
+  if (inc < studentZone1Max) return 0
+  if (inc < studentZone2Max) {
     const slice = clampNonNegative(inc - studentZone1Max)
-    const calc = slice * rateMain
-    return roundToCents(Math.max(calc, m.secondary))
+    return roundToCents(slice * article37Rate)
   }
   return legalMainSelfEmployed(inc)
 }
@@ -106,8 +105,8 @@ function computeLegalAnnualBeforeFees(params: {
   studentExempt: boolean
 }): number {
   const income = roundToCents(clampNonNegative(params.annualNetIncome))
-  const { b0, article37Switch } = IPP_2026.socialContributions.boundaries
-  const m = IPP_2026.socialContributions.minimumBaseAnnual
+  const { article37LowerThreshold, article37UpperThreshold } =
+    IPP_2026.socialContributions.boundaries
 
   switch (params.status) {
     case 'main':
@@ -115,12 +114,16 @@ function computeLegalAnnualBeforeFees(params: {
     case 'complementary':
       return legalSecondarySelfEmployed(income)
     case 'article37': {
-      if (income <= b0) return m.article37
-      if (income > article37Switch) return legalMainSelfEmployed(income)
-      const { b2 } = IPP_2026.socialContributions.boundaries
-      const { rateMain } = IPP_2026.socialContributions.rates
-      if (income <= b2) return roundToCents(income * rateMain)
-      return standardTwoBandLegal(income)
+      // Article 37 annual logic:
+      // - income < lower threshold: no contribution
+      // - lower..upper: (income - lower) × 5.125%
+      // - >= upper: switch to main self-employed regime
+      const { article37Rate } = IPP_2026.socialContributions.rates
+      if (income < article37LowerThreshold) return 0
+      if (income < article37UpperThreshold) {
+        return roundToCents((income - article37LowerThreshold) * article37Rate)
+      }
+      return legalMainSelfEmployed(income)
     }
     case 'assisting-spouse-maxi':
       return legalAssistingSpouseMaxi(income)
@@ -129,7 +132,7 @@ function computeLegalAnnualBeforeFees(params: {
     case 'active-pensioner':
       return pensionerLegal(income)
     case 'student':
-      return studentLegal(income, params.studentExempt)
+      return studentLegal(income)
     case 'company-director':
       // Directors use dedicated handling in IPP summary paths; fallback here mirrors main regime.
       return legalMainSelfEmployed(income)

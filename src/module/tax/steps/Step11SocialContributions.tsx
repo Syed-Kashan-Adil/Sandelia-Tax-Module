@@ -75,7 +75,7 @@ export function Step11SocialContributions() {
       {status === 'student' ? (
         <Field
           label="Student: exemption from provisional contribution (zone 1)?"
-          hint="If exempt, zone 1 income uses €0 provisional contribution instead of the minimum base."
+          hint="Student regime uses threshold-slice logic; this toggle is kept for compatibility with existing saved inputs."
         >
           <div className="flex gap-4">
             <ToggleOption
