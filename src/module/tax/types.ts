@@ -84,7 +84,9 @@ export interface TaxOnboardingValues {
   partnerEmploymentIncomeForSecondaryActivity: number;
   partnerCompanyDirectorRemuneration: number;
   partnerCompanyDirectorSocialContributionsAnnual: number;
-  partnerAssistingSpouseStatus: "assisting-spouse-maxi" | "assisting-spouse-mini";
+  partnerAssistingSpouseStatus:
+    | "assisting-spouse-maxi"
+    | "assisting-spouse-mini";
 
   // Step 6 – Children
   children: DependentChildInput[];
@@ -285,6 +287,10 @@ export interface TaxSummary {
   taxTotalIncludingMunicipalAndCsss: number;
 
   socialContributions: SocialContributionsBreakdown;
+  /** User-entered current social contribution paid per quarter (comparison input). */
+  currentQuarterlySocialContributionInput: number;
+  /** User-entered current social contribution paid per year (comparison input). */
+  currentAnnualSocialContributionInput: number;
 
   withholdingTax: number;
   /** Primary taxpayer withholding only (partner withheld separately for household breakdown) */
