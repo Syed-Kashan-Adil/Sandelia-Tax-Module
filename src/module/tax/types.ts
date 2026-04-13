@@ -81,9 +81,13 @@ export interface TaxOnboardingValues {
   partnerEstimatedSelfEmployedIncome: number;
   partnerEstimatedProfessionalExpenses: number;
   partnerSocialContributionsAnnual: number;
+  partnerUseSocialContributionsOverride: boolean;
+  partnerSocialContributionsOverrideAnnual: number | null;
   partnerEmploymentIncomeForSecondaryActivity: number;
   partnerCompanyDirectorRemuneration: number;
   partnerCompanyDirectorSocialContributionsAnnual: number;
+  partnerCompanyDirectorUseSocialContributionsOverride: boolean;
+  partnerCompanyDirectorSocialContributionsOverrideAnnual: number | null;
   partnerAssistingSpouseStatus:
     | "assisting-spouse-maxi"
     | "assisting-spouse-mini";
@@ -307,10 +311,13 @@ export interface TaxSummary {
   partnerSelfEmployedGross: number;
   partnerSelfEmployedExpenses: number;
   partnerSelfEmployedSocialContributions: number;
+  partnerSelfEmployedSocialContributionsManualInput: number;
   partnerSelfEmployedNetForIpp: number;
   partnerIncomeType: TaxOnboardingValues["partnerIncomeType"];
   partnerCompanyDirectorRemuneration: number;
   partnerCompanyDirectorSocialContributions: number;
+  partnerCompanyDirectorSocialContributionsManualInput: number;
+  partnerCompanyDirectorFlatRateDeduction: number;
   partnerCompanyDirectorNetForIpp: number;
 
   advanceTaxPaymentsMode: TaxOnboardingValues["advanceTaxPaymentsMode"];

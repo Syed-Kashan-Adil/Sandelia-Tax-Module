@@ -50,9 +50,13 @@ export const defaultTaxOnboardingValues: TaxOnboardingValues = {
   partnerEstimatedSelfEmployedIncome: 0,
   partnerEstimatedProfessionalExpenses: 0,
   partnerSocialContributionsAnnual: 0,
+  partnerUseSocialContributionsOverride: false,
+  partnerSocialContributionsOverrideAnnual: null,
   partnerEmploymentIncomeForSecondaryActivity: 0,
   partnerCompanyDirectorRemuneration: 0,
   partnerCompanyDirectorSocialContributionsAnnual: 0,
+  partnerCompanyDirectorUseSocialContributionsOverride: false,
+  partnerCompanyDirectorSocialContributionsOverrideAnnual: null,
   partnerAssistingSpouseStatus: "assisting-spouse-maxi",
   children: [],
   otherDependents: {

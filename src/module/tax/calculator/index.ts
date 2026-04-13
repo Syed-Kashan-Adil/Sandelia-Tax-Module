@@ -80,10 +80,9 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     ),
   );
 
-  const partnerWithholdingTax =
-    values.partnerWithholdingTaxMode === "unknown"
-      ? 0
-      : values.partnerWithholdingTax;
+  const partnerWithholdingTax = roundToCents(
+    clampNonNegative(values.partnerWithholdingTax),
+  );
   // 1) Primary taxpayer professional profile (same engine shape as partner).
   const annualTurnoverOrProfessionalIncome =
     computeEstimatedAnnualProfessionalIncome(values);
@@ -191,14 +190,29 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
         : 0,
     ),
   );
+  const partnerSelfEmployedStatus =
+    values.partnerIncomeType === "self-employed-main"
+      ? ("main" as const)
+      : values.partnerIncomeType === "self-employed-secondary"
+        ? ("complementary" as const)
+        : values.partnerIncomeType === "assisting-spouse"
+          ? values.partnerAssistingSpouseStatus
+          : null;
+  const partnerSelfEmployedProfitBeforeSocial = roundToCents(
+    clampNonNegative(partnerSelfEmployedGross - partnerSelfEmployedExpenses),
+  );
+  const partnerSelfEmployedSocialBreakdown =
+    partnerSelfEmployedStatus === null
+      ? null
+      : computeSocialContributions({
+          status: partnerSelfEmployedStatus,
+          annualNetIncome: partnerSelfEmployedProfitBeforeSocial,
+          overrideAnnualAmount: null,
+          socialInsuranceFund: values.socialInsuranceFund,
+          studentSocialExemption: false,
+        });
   const partnerSelfEmployedSocialContributions = roundToCents(
-    clampNonNegative(
-      values.partnerIncomeType === "self-employed-main" ||
-        values.partnerIncomeType === "self-employed-secondary" ||
-        values.partnerIncomeType === "assisting-spouse"
-        ? values.partnerSocialContributionsAnnual
-        : 0,
-    ),
+    partnerSelfEmployedSocialBreakdown?.annualAmount ?? 0,
   );
   const partnerSelfEmployedNetForIpp = roundToCents(
     clampNonNegative(
@@ -210,8 +224,15 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const partnerCompanyDirectorRemuneration = roundToCents(
     clampNonNegative(values.partnerCompanyDirectorRemuneration),
   );
+  const partnerCompanyDirectorSocialBreakdown = computeSocialContributions({
+    status: "company-director",
+    annualNetIncome: partnerCompanyDirectorRemuneration,
+    overrideAnnualAmount: null,
+    socialInsuranceFund: values.socialInsuranceFund,
+    studentSocialExemption: false,
+  });
   const partnerCompanyDirectorSocialContributions = roundToCents(
-    clampNonNegative(values.partnerCompanyDirectorSocialContributionsAnnual),
+    partnerCompanyDirectorSocialBreakdown.annualAmount,
   );
   const partnerCompanyDirectorFlatRate = computeDirectorFlatRate({
     grossIncome: partnerCompanyDirectorRemuneration,
@@ -220,12 +241,8 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const partnerCompanyDirectorNetForIpp = roundToCents(
     clampNonNegative(
       partnerCompanyDirectorRemuneration -
-        partnerCompanyDirectorSocialContributions,
-    ),
-  );
-  const partnerDirectorProfessionalIncome = roundToCents(
-    clampNonNegative(
-      partnerCompanyDirectorRemuneration - partnerCompanyDirectorFlatRate,
+        partnerCompanyDirectorSocialContributions -
+        partnerCompanyDirectorFlatRate,
     ),
   );
 
@@ -235,7 +252,7 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
 
   const partnerIncome = roundToCents(
     values.partnerIncomeType === "company-director"
-      ? partnerDirectorProfessionalIncome
+      ? partnerCompanyDirectorNetForIpp
       : partnerSalaryAfterExpenses + partnerSelfEmployedNetForIpp,
   );
   const householdIncome = roundToCents(userIncome + partnerIncome);
@@ -497,9 +514,16 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     partnerSelfEmployedExpenses: partnerSelfEmployedExpenses,
     partnerSelfEmployedSocialContributions:
       partnerSelfEmployedSocialContributions,
+    partnerSelfEmployedSocialContributionsManualInput: roundToCents(
+      clampNonNegative(values.partnerSocialContributionsAnnual),
+    ),
     partnerSelfEmployedNetForIpp,
     partnerCompanyDirectorRemuneration,
     partnerCompanyDirectorSocialContributions,
+    partnerCompanyDirectorSocialContributionsManualInput: roundToCents(
+      clampNonNegative(values.partnerCompanyDirectorSocialContributionsAnnual),
+    ),
+    partnerCompanyDirectorFlatRateDeduction: partnerCompanyDirectorFlatRate,
     partnerCompanyDirectorNetForIpp,
     advanceTaxPaymentsMode: values.advanceTaxPaymentsMode,
     advanceTaxPayments,

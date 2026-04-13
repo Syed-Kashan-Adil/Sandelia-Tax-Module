@@ -54,16 +54,6 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner withholding tax (€)">
-            <Input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              value={values.partnerWithholdingTax}
-              onChange={(e) => setValues({ partnerWithholdingTax: Number(e.target.value || 0) })}
-              disabled={!enabled}
-            />
-          </Field>
         </>
       ) : null}
 
@@ -95,7 +85,7 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner social contributions (annual)">
+          <Field label="Partner social contributions paid (manual input, annual)">
             <Input
               type="number"
               min={0}
@@ -150,7 +140,7 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner social contributions (annual)">
+          <Field label="Partner social contributions paid (manual input, annual)">
             <Input
               type="number"
               min={0}
@@ -177,23 +167,16 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner withholding tax (€)">
-            <Input
-              type="number"
-              min={0}
-              value={values.partnerWithholdingTax}
-              onChange={(e) => setValues({ partnerWithholdingTax: Number(e.target.value || 0) })}
-              disabled={!enabled}
-            />
-          </Field>
-          <Field label="Partner social contributions (annual)">
+          <Field label="Partner social contributions paid (manual input, annual)">
             <Input
               type="number"
               min={0}
               value={values.partnerCompanyDirectorSocialContributionsAnnual}
               onChange={(e) =>
                 setValues({
-                  partnerCompanyDirectorSocialContributionsAnnual: Number(e.target.value || 0),
+                  partnerCompanyDirectorSocialContributionsAnnual: Number(
+                    e.target.value || 0,
+                  ),
                 })
               }
               disabled={!enabled}
@@ -240,7 +223,7 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner social contributions (annual)">
+          <Field label="Partner social contributions paid (manual input, annual)">
             <Input
               type="number"
               min={0}
@@ -254,25 +237,18 @@ export function Step5PartnerIncome() {
         </>
       ) : null}
 
-      <Field label="Partner withholding tax mode">
-        <Select
-          value={values.partnerWithholdingTaxMode}
-          onChange={(e) =>
-            setValues({ partnerWithholdingTaxMode: e.target.value as 'known' | 'unknown' })
-          }
-          disabled={!enabled}
-        >
-          <option value="known">Known</option>
-          <option value="unknown">Unknown</option>
-        </Select>
-      </Field>
-      <Field label="Fallback partner withholding tax (€)">
+      <Field label="Partner withholding tax amount (€)">
         <Input
           type="number"
           inputMode="decimal"
           min={0}
           value={values.partnerWithholdingTax}
-          onChange={(e) => setValues({ partnerWithholdingTax: Number(e.target.value || 0) })}
+          onChange={(e) =>
+            setValues({
+              partnerWithholdingTax: Number(e.target.value || 0),
+              partnerWithholdingTaxMode: Number(e.target.value || 0) > 0 ? 'known' : 'unknown',
+            })
+          }
           disabled={!enabled}
         />
       </Field>

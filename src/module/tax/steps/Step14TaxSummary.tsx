@@ -63,8 +63,8 @@ export function Step14TaxSummary(props: {
     : 0;
   const companyDirectorFlatRateDeduction = isPrimaryCompanyDirector
     ? round2(
-        Math.max(0, companyDirectorRemunerationGross - s.selfEmployedProfit),
-      )
+      Math.max(0, companyDirectorRemunerationGross - s.selfEmployedProfit),
+    )
     : 0;
   const totalTaxableProfessionalIncome = round2(
     userSalaryNet + s.selfEmployedNetForIpp,
@@ -172,9 +172,31 @@ export function Step14TaxSummary(props: {
                 value={eur(s.partnerCompanyDirectorRemuneration)}
               />
               <SummaryRow
-                label="Partner company director social contributions"
+                label="Partner company director social contributions (auto-calculated, used for IPP)"
                 value={eur(-s.partnerCompanyDirectorSocialContributions)}
               />
+              <SummaryRow
+                label="Partner company director social contributions (auto-calculated, per quarter)"
+                value={eur(-round2(s.partnerCompanyDirectorSocialContributions / 4))}
+              />
+              {s.partnerCompanyDirectorSocialContributionsManualInput > 0 ? (
+                <>
+                  <SummaryRow
+                    label="Partner company director social contributions paid (manual input, comparison only)"
+                    value={eur(-s.partnerCompanyDirectorSocialContributionsManualInput)}
+                  />
+                  <SummaryRow
+                    label="Partner company director social contributions paid (manual input, per quarter)"
+                    value={eur(-round2(s.partnerCompanyDirectorSocialContributionsManualInput / 4))}
+                  />
+                </>
+              ) : null}
+              {s.partnerCompanyDirectorFlatRateDeduction > 0 ? (
+                <SummaryRow
+                  label="Partner company director lump-sum deduction (3%, max €3,200; after social contributions)"
+                  value={eur(-s.partnerCompanyDirectorFlatRateDeduction)}
+                />
+              ) : null}
               <SummaryRow
                 label="Partner company director net for IPP"
                 value={eur(s.partnerCompanyDirectorNetForIpp)}
@@ -198,9 +220,25 @@ export function Step14TaxSummary(props: {
                 value={eur(-s.partnerSelfEmployedExpenses)}
               />
               <SummaryRow
-                label="Partner social contributions"
+                label="Partner social contributions (auto-calculated, used for IPP)"
                 value={eur(-s.partnerSelfEmployedSocialContributions)}
               />
+              <SummaryRow
+                label="Partner social contributions (auto-calculated, per quarter)"
+                value={eur(-round2(s.partnerSelfEmployedSocialContributions / 4))}
+              />
+              {s.partnerSelfEmployedSocialContributionsManualInput > 0 ? (
+                <>
+                  <SummaryRow
+                    label="Partner social contributions paid (manual input, comparison only)"
+                    value={eur(-s.partnerSelfEmployedSocialContributionsManualInput)}
+                  />
+                  <SummaryRow
+                    label="Partner social contributions paid (manual input, per quarter)"
+                    value={eur(-round2(s.partnerSelfEmployedSocialContributionsManualInput / 4))}
+                  />
+                </>
+              ) : null}
               <SummaryRow
                 label="Partner self-employed net for IPP"
                 value={eur(s.partnerSelfEmployedNetForIpp)}
@@ -478,11 +516,10 @@ export function Step14TaxSummary(props: {
                 Estimated balance due
               </span>
               <span
-                className={`font-semibold ${
-                  s.finalBalance > 0
+                className={`font-semibold ${s.finalBalance > 0
                     ? "text-red-600 dark:text-red-400"
                     : "text-green-600 dark:text-green-400"
-                }`}
+                  }`}
               >
                 {eur(s.finalBalance)}
               </span>
@@ -534,12 +571,12 @@ export function Step14TaxSummary(props: {
                           isPrimaryCompanyDirector
                             ? companyDirectorRemunerationGross
                             : s.selfEmployedProfit +
-                                s.selfEmployedProfessionalExpenses,
+                            s.selfEmployedProfessionalExpenses,
                         )}
                       </span>
                     </div>
                     {isPrimaryCompanyDirector &&
-                    companyDirectorFlatRateDeduction > 0 ? (
+                      companyDirectorFlatRateDeduction > 0 ? (
                       <div className="flex justify-between gap-4">
                         <span>
                           Lump-sum director deduction (3%, max €3,200; after
@@ -551,7 +588,12 @@ export function Step14TaxSummary(props: {
                       </div>
                     ) : null}
                     <div className="flex justify-between gap-4">
-                      <span>Social contributions</span>
+                      <span>
+                        Social contributions
+                        {s.currentQuarterlySocialContributionInput > 0
+                          ? ' (manual current-paid input shown in comparison rows)'
+                          : ''}
+                      </span>
                       <span className="font-medium text-foreground">
                         {eur(-s.socialContributions.annualAmount)}
                       </span>
@@ -702,11 +744,10 @@ export function Step14TaxSummary(props: {
                 9. Estimated final result
               </span>
               <span
-                className={`font-semibold ${
-                  s.finalBalance > 0
+                className={`font-semibold ${s.finalBalance > 0
                     ? "text-red-600 dark:text-red-400"
                     : "text-green-600 dark:text-green-400"
-                }`}
+                  }`}
               >
                 {eur(s.finalBalance)}
               </span>
