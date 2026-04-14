@@ -86,6 +86,7 @@ export interface TaxOnboardingValues {
   partnerEmploymentIncomeForSecondaryActivity: number;
   partnerCompanyDirectorRemuneration: number;
   partnerCompanyDirectorSocialContributionsAnnual: number;
+  partnerCompanyDirectorSocialContributionsPaidByCompany: boolean;
   partnerCompanyDirectorUseSocialContributionsOverride: boolean;
   partnerCompanyDirectorSocialContributionsOverrideAnnual: number | null;
   partnerAssistingSpouseStatus:
@@ -127,6 +128,7 @@ export interface TaxOnboardingValues {
   employeeProfessionalExpensesLumpSumOverride: number | null;
   companyDirectorRemuneration: number;
   companyDirectorSocialContributionsAnnual: number;
+  companyDirectorSocialContributionsPaidByCompany: boolean;
 
   // Step 10
   profitEstimationMode:
@@ -317,8 +319,14 @@ export interface TaxSummary {
   partnerCompanyDirectorRemuneration: number;
   partnerCompanyDirectorSocialContributions: number;
   partnerCompanyDirectorSocialContributionsManualInput: number;
+  partnerCompanyDirectorSocialContributionsPaidByCompany: boolean;
+  partnerCompanyDirectorAtnSocialContributions: number;
+  partnerCompanyDirectorTaxableGross: number;
   partnerCompanyDirectorFlatRateDeduction: number;
   partnerCompanyDirectorNetForIpp: number;
+  companyDirectorSocialContributionsPaidByCompany: boolean;
+  companyDirectorAtnSocialContributions: number;
+  companyDirectorTaxableGross: number;
 
   advanceTaxPaymentsMode: TaxOnboardingValues["advanceTaxPaymentsMode"];
   advanceTaxPayments: number;

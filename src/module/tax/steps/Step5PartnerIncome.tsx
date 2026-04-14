@@ -167,6 +167,34 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
+          <Field label="Are partner social contributions paid by the company?">
+            <div className="flex gap-4">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="partner-company-director-social-paid-by-company"
+                  checked={values.partnerCompanyDirectorSocialContributionsPaidByCompany}
+                  onChange={() =>
+                    setValues({ partnerCompanyDirectorSocialContributionsPaidByCompany: true })
+                  }
+                  disabled={!enabled}
+                />
+                <span>Yes</span>
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="partner-company-director-social-paid-by-company"
+                  checked={!values.partnerCompanyDirectorSocialContributionsPaidByCompany}
+                  onChange={() =>
+                    setValues({ partnerCompanyDirectorSocialContributionsPaidByCompany: false })
+                  }
+                  disabled={!enabled}
+                />
+                <span>No</span>
+              </label>
+            </div>
+          </Field>
           <Field label="Partner social contributions paid (manual input, annual)">
             <Input
               type="number"

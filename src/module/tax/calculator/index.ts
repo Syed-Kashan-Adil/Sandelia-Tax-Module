@@ -112,13 +112,25 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const primaryDirectorSocial = roundToCents(
     primaryDirectorSocialBreakdown.annualAmount,
   );
+  const primaryDirectorAtnSocialContributions =
+    values.companyDirectorSocialContributionsPaidByCompany
+      ? primaryDirectorSocial
+      : 0;
+  const primaryDirectorTaxableGross = roundToCents(
+    primaryDirectorRemuneration + primaryDirectorAtnSocialContributions,
+  );
+  const primaryDirectorBaseAfterContributions = roundToCents(
+    clampNonNegative(primaryDirectorTaxableGross - primaryDirectorSocial),
+  );
   const primaryDirectorFlatRate = computeDirectorFlatRate({
-    grossIncome: primaryDirectorRemuneration,
+    grossIncome: primaryDirectorTaxableGross,
     socialContributionsAnnual: primaryDirectorSocial,
   });
   const selfEmployedProfit = isPrimaryDirector
     ? roundToCents(
-        clampNonNegative(primaryDirectorRemuneration - primaryDirectorFlatRate),
+        clampNonNegative(
+          primaryDirectorBaseAfterContributions - primaryDirectorFlatRate,
+        ),
       )
     : defaultSelfEmployedProfit;
 
@@ -136,7 +148,7 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
 
   const selfEmployedNetForIpp = isPrimaryDirector
     ? roundToCents(
-        clampNonNegative(primaryDirectorRemuneration - primaryDirectorSocial),
+        clampNonNegative(primaryDirectorBaseAfterContributions),
       )
     : roundToCents(
         clampNonNegative(selfEmployedProfit - socialContributions.annualAmount),
@@ -234,14 +246,25 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const partnerCompanyDirectorSocialContributions = roundToCents(
     partnerCompanyDirectorSocialBreakdown.annualAmount,
   );
+  const partnerCompanyDirectorAtnSocialContributions =
+    values.partnerCompanyDirectorSocialContributionsPaidByCompany
+      ? partnerCompanyDirectorSocialContributions
+      : 0;
+  const partnerCompanyDirectorTaxableGross = roundToCents(
+    partnerCompanyDirectorRemuneration + partnerCompanyDirectorAtnSocialContributions,
+  );
+  const partnerCompanyDirectorBaseAfterContributions = roundToCents(
+    clampNonNegative(
+      partnerCompanyDirectorTaxableGross - partnerCompanyDirectorSocialContributions,
+    ),
+  );
   const partnerCompanyDirectorFlatRate = computeDirectorFlatRate({
-    grossIncome: partnerCompanyDirectorRemuneration,
+    grossIncome: partnerCompanyDirectorTaxableGross,
     socialContributionsAnnual: partnerCompanyDirectorSocialContributions,
   });
   const partnerCompanyDirectorNetForIpp = roundToCents(
     clampNonNegative(
-      partnerCompanyDirectorRemuneration -
-        partnerCompanyDirectorSocialContributions -
+      partnerCompanyDirectorBaseAfterContributions -
         partnerCompanyDirectorFlatRate,
     ),
   );
@@ -523,8 +546,17 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     partnerCompanyDirectorSocialContributionsManualInput: roundToCents(
       clampNonNegative(values.partnerCompanyDirectorSocialContributionsAnnual),
     ),
+    partnerCompanyDirectorSocialContributionsPaidByCompany:
+      values.partnerCompanyDirectorSocialContributionsPaidByCompany,
+    partnerCompanyDirectorAtnSocialContributions:
+      partnerCompanyDirectorAtnSocialContributions,
+    partnerCompanyDirectorTaxableGross: partnerCompanyDirectorTaxableGross,
     partnerCompanyDirectorFlatRateDeduction: partnerCompanyDirectorFlatRate,
     partnerCompanyDirectorNetForIpp,
+    companyDirectorSocialContributionsPaidByCompany:
+      values.companyDirectorSocialContributionsPaidByCompany,
+    companyDirectorAtnSocialContributions: primaryDirectorAtnSocialContributions,
+    companyDirectorTaxableGross: primaryDirectorTaxableGross,
     advanceTaxPaymentsMode: values.advanceTaxPaymentsMode,
     advanceTaxPayments,
     advancePaymentPenalty,

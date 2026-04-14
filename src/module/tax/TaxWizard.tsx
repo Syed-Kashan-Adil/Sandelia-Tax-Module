@@ -150,6 +150,8 @@ export function TaxWizard() {
               profitEstimationMode: "manual",
               companyDirectorRemuneration: mrRemuneration,
               companyDirectorSocialContributionsAnnual: socialAnnual,
+              companyDirectorSocialContributionsPaidByCompany:
+                values.companySocialPaidBy === "company",
               estimatedSelfEmployedProfit: 0,
               estimatedProfessionalExpenses: 0,
               isSocialContributionsExempt:

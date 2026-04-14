@@ -65,6 +65,26 @@ export function Step11SocialContributions() {
           enter your current quarterly amount below to override and compare.
         </div>
       ) : null}
+      {status === "company-director" ? (
+        <Field label="Are the social contributions paid by the company?">
+          <div className="flex gap-4">
+            <ToggleOption
+              label="Yes"
+              checked={values.companyDirectorSocialContributionsPaidByCompany}
+              onChange={() =>
+                setValues({ companyDirectorSocialContributionsPaidByCompany: true })
+              }
+            />
+            <ToggleOption
+              label="No"
+              checked={!values.companyDirectorSocialContributionsPaidByCompany}
+              onChange={() =>
+                setValues({ companyDirectorSocialContributionsPaidByCompany: false })
+              }
+            />
+          </div>
+        </Field>
+      ) : null}
 
       {status === "student" ? (
         <Field

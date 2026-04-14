@@ -108,6 +108,18 @@ export function Step14TaxSummary(props: {
               value={eur(companyDirectorRemunerationGross)}
             />
           ) : null}
+          {isPrimaryCompanyDirector && s.companyDirectorAtnSocialContributions > 0 ? (
+            <>
+              <SummaryRow
+                label="ATN – social contributions paid by the company"
+                value={eur(s.companyDirectorAtnSocialContributions)}
+              />
+              <SummaryRow
+                label="Your company director taxable gross (remuneration + ATN)"
+                value={eur(s.companyDirectorTaxableGross)}
+              />
+            </>
+          ) : null}
           {isPrimaryCompanyDirector && companyDirectorFlatRateDeduction > 0 ? (
             <SummaryRow
               label="Company director lump-sum deduction (3%, max €3,200; applied after social contributions)"
@@ -171,6 +183,18 @@ export function Step14TaxSummary(props: {
                 label="Partner company director remuneration"
                 value={eur(s.partnerCompanyDirectorRemuneration)}
               />
+              {s.partnerCompanyDirectorAtnSocialContributions > 0 ? (
+                <>
+                  <SummaryRow
+                    label="ATN – social contributions paid by the company (partner)"
+                    value={eur(s.partnerCompanyDirectorAtnSocialContributions)}
+                  />
+                  <SummaryRow
+                    label="Partner company director taxable gross (remuneration + ATN)"
+                    value={eur(s.partnerCompanyDirectorTaxableGross)}
+                  />
+                </>
+              ) : null}
               <SummaryRow
                 label="Partner company director social contributions (auto-calculated, used for IPP)"
                 value={eur(-s.partnerCompanyDirectorSocialContributions)}
