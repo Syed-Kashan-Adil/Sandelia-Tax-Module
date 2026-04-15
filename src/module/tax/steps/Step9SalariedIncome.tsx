@@ -51,7 +51,7 @@ export function Step9SalariedIncome() {
       </Field>
 
       <Field
-        label="What is your taxable salaried income (form 280.10)? (€)"
+        label="What is your taxable salaried income (form 281.10)? (€)"
         hint="Enter the taxable remuneration from your form (e.g. code 1250/2250)."
       >
         <Input
@@ -64,7 +64,7 @@ export function Step9SalariedIncome() {
         />
       </Field>
 
-      <Field label="How much withholding tax was deducted from your salary?">
+      <Field label="What amount of tax has been withheld from your salary at source (precompte)?">
         <div className="space-y-3">
           <button
             type="button"

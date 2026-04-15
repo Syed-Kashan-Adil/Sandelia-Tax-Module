@@ -113,16 +113,17 @@ export function Step11CompanySocialContributions() {
       <Field
         label={
           paidBy === "company"
-            ? "Amount paid by company (€)"
-            : "Amount paid personally (€)"
+            ? "Amount paid by company (€) - optional override"
+            : "Amount paid personally (€) - optional override"
         }
-        hint="Enter the annual amount for the selected option."
+        hint="Leave empty or 0 to use the automatic calculation from the director data."
       >
         <Input
           type="number"
           inputMode="decimal"
           min={0}
           value={paidAmount}
+          disabled={isExempt}
           onChange={(e) =>
             setValues({ companySocialPaidAmount: Number(e.target.value || 0) })
           }

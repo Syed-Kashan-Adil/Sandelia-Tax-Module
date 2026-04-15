@@ -1,3 +1,6 @@
+import { useMemo } from 'react'
+
+import { computeSocialContributions } from '../calculator/socialContributions'
 import { useTaxOnboardingStore } from '../store'
 import { Field } from '../ui/Field'
 import { Input } from '../ui/Input'
@@ -9,6 +12,35 @@ export function Step5PartnerIncome() {
   const setValues = useTaxOnboardingStore((s) => s.setValues)
 
   const enabled = maritalStatus === 'married' || maritalStatus === 'legally-cohabiting'
+  const partnerSelfEmployedStatus = useMemo(() => {
+    if (values.partnerIncomeType === 'self-employed-main') return 'main' as const
+    if (values.partnerIncomeType === 'self-employed-secondary') return 'complementary' as const
+    if (values.partnerIncomeType === 'assisting-spouse') return values.partnerAssistingSpouseStatus
+    return null
+  }, [values.partnerAssistingSpouseStatus, values.partnerIncomeType])
+  const partnerSelfEmployedAnnualNet = Math.max(
+    0,
+    values.partnerEstimatedSelfEmployedIncome - values.partnerEstimatedProfessionalExpenses
+  )
+  const partnerSelfEmployedAuto = useMemo(() => {
+    if (!partnerSelfEmployedStatus) return null
+    return computeSocialContributions({
+      status: partnerSelfEmployedStatus,
+      annualNetIncome: partnerSelfEmployedAnnualNet,
+      overrideAnnualAmount: null,
+      socialInsuranceFund: values.socialInsuranceFund,
+      studentSocialExemption: false,
+    })
+  }, [partnerSelfEmployedAnnualNet, partnerSelfEmployedStatus, values.socialInsuranceFund])
+  const partnerDirectorAuto = useMemo(() => {
+    return computeSocialContributions({
+      status: 'company-director',
+      annualNetIncome: Math.max(0, values.partnerCompanyDirectorRemuneration),
+      overrideAnnualAmount: null,
+      socialInsuranceFund: values.socialInsuranceFund,
+      studentSocialExemption: false,
+    })
+  }, [values.partnerCompanyDirectorRemuneration, values.socialInsuranceFund])
 
   return (
     <div className="space-y-5">
@@ -85,16 +117,14 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner social contributions paid (manual input, annual)">
-            <Input
-              type="number"
-              min={0}
-              value={values.partnerSocialContributionsAnnual}
-              onChange={(e) =>
-                setValues({ partnerSocialContributionsAnnual: Number(e.target.value || 0) })
-              }
-              disabled={!enabled}
-            />
+          <Field
+            label="Partner social contributions (automatic estimate, annual)"
+            hint="Calculated instantly from partner net income and selected social fund."
+          >
+            <Input value={(partnerSelfEmployedAuto?.annualAmount ?? 0).toFixed(2)} disabled />
+          </Field>
+          <Field label="Partner social contributions (automatic estimate, per quarter)">
+            <Input value={(partnerSelfEmployedAuto?.quarterlyAmount ?? 0).toFixed(2)} disabled />
           </Field>
         </>
       ) : null}
@@ -140,16 +170,14 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner social contributions paid (manual input, annual)">
-            <Input
-              type="number"
-              min={0}
-              value={values.partnerSocialContributionsAnnual}
-              onChange={(e) =>
-                setValues({ partnerSocialContributionsAnnual: Number(e.target.value || 0) })
-              }
-              disabled={!enabled}
-            />
+          <Field
+            label="Partner social contributions (automatic estimate, annual)"
+            hint="Calculated instantly from partner net income and selected social fund."
+          >
+            <Input value={(partnerSelfEmployedAuto?.annualAmount ?? 0).toFixed(2)} disabled />
+          </Field>
+          <Field label="Partner social contributions (automatic estimate, per quarter)">
+            <Input value={(partnerSelfEmployedAuto?.quarterlyAmount ?? 0).toFixed(2)} disabled />
           </Field>
         </>
       ) : null}
@@ -195,20 +223,14 @@ export function Step5PartnerIncome() {
               </label>
             </div>
           </Field>
-          <Field label="Partner social contributions paid (manual input, annual)">
-            <Input
-              type="number"
-              min={0}
-              value={values.partnerCompanyDirectorSocialContributionsAnnual}
-              onChange={(e) =>
-                setValues({
-                  partnerCompanyDirectorSocialContributionsAnnual: Number(
-                    e.target.value || 0,
-                  ),
-                })
-              }
-              disabled={!enabled}
-            />
+          <Field
+            label="Partner company director social contributions (automatic estimate, annual)"
+            hint="Auto-calculated from remuneration and selected social fund."
+          >
+            <Input value={partnerDirectorAuto.annualAmount.toFixed(2)} disabled />
+          </Field>
+          <Field label="Partner company director social contributions (automatic estimate, per quarter)">
+            <Input value={partnerDirectorAuto.quarterlyAmount.toFixed(2)} disabled />
           </Field>
         </>
       ) : null}
@@ -251,16 +273,14 @@ export function Step5PartnerIncome() {
               disabled={!enabled}
             />
           </Field>
-          <Field label="Partner social contributions paid (manual input, annual)">
-            <Input
-              type="number"
-              min={0}
-              value={values.partnerSocialContributionsAnnual}
-              onChange={(e) =>
-                setValues({ partnerSocialContributionsAnnual: Number(e.target.value || 0) })
-              }
-              disabled={!enabled}
-            />
+          <Field
+            label="Partner social contributions (automatic estimate, annual)"
+            hint="Calculated instantly from assisting spouse net income and selected social fund."
+          >
+            <Input value={(partnerSelfEmployedAuto?.annualAmount ?? 0).toFixed(2)} disabled />
+          </Field>
+          <Field label="Partner social contributions (automatic estimate, per quarter)">
+            <Input value={(partnerSelfEmployedAuto?.quarterlyAmount ?? 0).toFixed(2)} disabled />
           </Field>
         </>
       ) : null}

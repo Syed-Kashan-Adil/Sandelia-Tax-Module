@@ -69,6 +69,7 @@ export const IPP_2026 = {
   socialContributions: {
     boundaries: {
       b0: 1922.16,
+      pensionerNoContributionThreshold: 3844.32,
       b1: 17374.08,
       b2: 75024.54,
       b3: 110562.42,

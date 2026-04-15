@@ -16,9 +16,6 @@ export function Step11SocialContributions() {
   const isExempt = useTaxOnboardingStore(
     (s) => s.values.isSocialContributionsExempt,
   );
-  const studentSocialExemption = useTaxOnboardingStore(
-    (s) => s.values.studentSocialExemption,
-  );
   const fund = useTaxOnboardingStore((s) => s.values.socialInsuranceFund);
   const currentQuarterly = useTaxOnboardingStore(
     (s) => s.values.currentQuarterlySocialContribution,
@@ -51,9 +48,9 @@ export function Step11SocialContributions() {
         annualNetIncome: netIncome,
         overrideAnnualAmount,
         socialInsuranceFund: fund,
-        studentSocialExemption,
+        studentSocialExemption: false,
       }),
-    [status, netIncome, overrideAnnualAmount, fund, studentSocialExemption],
+    [status, netIncome, overrideAnnualAmount, fund],
   );
 
   return (
@@ -81,26 +78,6 @@ export function Step11SocialContributions() {
               onChange={() =>
                 setValues({ companyDirectorSocialContributionsPaidByCompany: false })
               }
-            />
-          </div>
-        </Field>
-      ) : null}
-
-      {status === "student" ? (
-        <Field
-          label="Student: exemption from provisional contribution (zone 1)?"
-          hint="Student regime uses threshold-slice logic; this toggle is kept for compatibility with existing saved inputs."
-        >
-          <div className="flex gap-4">
-            <ToggleOption
-              label="Exempt"
-              checked={studentSocialExemption}
-              onChange={() => setValues({ studentSocialExemption: true })}
-            />
-            <ToggleOption
-              label="Not exempt (provisional minimum applies)"
-              checked={!studentSocialExemption}
-              onChange={() => setValues({ studentSocialExemption: false })}
             />
           </div>
         </Field>

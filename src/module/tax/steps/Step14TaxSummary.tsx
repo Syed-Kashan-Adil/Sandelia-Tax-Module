@@ -118,6 +118,15 @@ export function Step14TaxSummary(props: {
                 label="Your company director taxable gross (remuneration + ATN)"
                 value={eur(s.companyDirectorTaxableGross)}
               />
+              <SummaryRow
+                label="Your company director base after contributions (taxable gross - social contributions)"
+                value={eur(
+                  Math.max(
+                    0,
+                    s.companyDirectorTaxableGross - s.socialContributions.annualAmount,
+                  ),
+                )}
+              />
             </>
           ) : null}
           {isPrimaryCompanyDirector && companyDirectorFlatRateDeduction > 0 ? (
@@ -192,6 +201,16 @@ export function Step14TaxSummary(props: {
                   <SummaryRow
                     label="Partner company director taxable gross (remuneration + ATN)"
                     value={eur(s.partnerCompanyDirectorTaxableGross)}
+                  />
+                  <SummaryRow
+                    label="Partner company director base after contributions (taxable gross - social contributions)"
+                    value={eur(
+                      Math.max(
+                        0,
+                        s.partnerCompanyDirectorTaxableGross -
+                          s.partnerCompanyDirectorSocialContributions,
+                      ),
+                    )}
                   />
                 </>
               ) : null}

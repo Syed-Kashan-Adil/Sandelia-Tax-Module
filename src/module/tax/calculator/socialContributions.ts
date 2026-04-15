@@ -58,9 +58,10 @@ function legalAssistingSpouseMaxi(income: number): number {
 }
 
 function pensionerLegal(income: number): number {
-  const { b2, b3 } = IPP_2026.socialContributions.boundaries
+  const { b2, b3, pensionerNoContributionThreshold } = IPP_2026.socialContributions.boundaries
   const { pensionerLow, pensionerHigh } = IPP_2026.socialContributions.rates
   const inc = roundToCents(clampNonNegative(income))
+  if (inc < pensionerNoContributionThreshold) return 0
   if (inc <= b2) return roundToCents(inc * pensionerLow)
   const first = b2 * pensionerLow
   const second = clampNonNegative(Math.min(inc, b3) - b2) * pensionerHigh
@@ -102,7 +103,6 @@ function studentLegal(income: number): number {
 function computeLegalAnnualBeforeFees(params: {
   status: SelfEmployedStatus
   annualNetIncome: number
-  studentExempt: boolean
 }): number {
   const income = roundToCents(clampNonNegative(params.annualNetIncome))
   const { article37LowerThreshold, article37UpperThreshold } =
@@ -148,7 +148,6 @@ export function computeSocialContributions(params: {
 }): SocialContributionsBreakdown {
   const baseIncome = roundToCents(clampNonNegative(params.annualNetIncome))
   const feeRate = socialFundFeeRate(params.socialInsuranceFund)
-  const studentExempt = params.studentSocialExemption ?? false
 
   if (
     typeof params.overrideAnnualAmount === 'number' &&
@@ -169,10 +168,9 @@ export function computeSocialContributions(params: {
   const legalAnnualBeforeFees = computeLegalAnnualBeforeFees({
     status: params.status,
     annualNetIncome: baseIncome,
-    studentExempt,
   })
 
-  const b1 = IPP_2026.socialContributions.boundaries.b1
+  const { b1, pensionerNoContributionThreshold } = IPP_2026.socialContributions.boundaries
   let annualAmount = roundToCents(legalAnnualBeforeFees * (1 + feeRate))
   let quarterlyAmount = roundToCents(annualAmount / 4)
 
@@ -185,6 +183,7 @@ export function computeSocialContributions(params: {
   // Keep that amount as quarterly and annualize by ×4.
   if (
     params.status === 'active-pensioner' &&
+    baseIncome >= pensionerNoContributionThreshold &&
     baseIncome <= b1 &&
     params.socialInsuranceFund === 'partena'
   ) {
