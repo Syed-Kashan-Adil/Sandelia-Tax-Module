@@ -146,16 +146,18 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
         studentSocialExemption: values.studentSocialExemption,
       });
 
-  const selfEmployedNetForIpp = isPrimaryDirector
+  const selfEmployedNetForIppFinal = isPrimaryDirector
     ? roundToCents(
-        clampNonNegative(primaryDirectorBaseAfterContributions),
+        clampNonNegative(
+          primaryDirectorBaseAfterContributions - primaryDirectorFlatRate,
+        ),
       )
     : roundToCents(
         clampNonNegative(selfEmployedProfit - socialContributions.annualAmount),
       );
 
   const userProfessionalIncome = roundToCents(
-    userSalaryAfterExpenses + selfEmployedNetForIpp,
+    userSalaryAfterExpenses + selfEmployedNetForIppFinal,
   );
 
   // 2) Partner profile using same logic model.
@@ -491,7 +493,7 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
     salariedIncome: roundToCents(clampNonNegative(salariedIncome)),
     selfEmployedProfit,
     selfEmployedProfessionalExpenses: professionalExpenses,
-    selfEmployedNetForIpp,
+    selfEmployedNetForIpp: selfEmployedNetForIppFinal,
     otherIncome: roundToCents(clampNonNegative(values.otherIncome)),
     childrenCount: values.children?.length ?? 0,
     otherDependentsCount,

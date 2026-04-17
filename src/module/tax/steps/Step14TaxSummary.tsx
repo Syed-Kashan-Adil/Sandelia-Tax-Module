@@ -61,10 +61,22 @@ export function Step14TaxSummary(props: {
   const companyDirectorRemunerationGross = isPrimaryCompanyDirector
     ? s.socialContributions.baseIncome
     : 0;
+  const companyDirectorBaseAfterContributions = isPrimaryCompanyDirector
+    ? round2(
+        Math.max(
+          0,
+          s.companyDirectorTaxableGross - s.socialContributions.annualAmount,
+        ),
+      )
+    : 0;
   const companyDirectorFlatRateDeduction = isPrimaryCompanyDirector
     ? round2(
-      Math.max(0, companyDirectorRemunerationGross - s.selfEmployedProfit),
-    )
+        Math.min(
+          companyDirectorBaseAfterContributions * 0.03,
+          IPP_2026.professionalExpenses.companyDirectorLumpSumMax,
+          companyDirectorBaseAfterContributions,
+        ),
+      )
     : 0;
   const totalTaxableProfessionalIncome = round2(
     userSalaryNet + s.selfEmployedNetForIpp,

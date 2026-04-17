@@ -346,6 +346,7 @@ export interface CompanySocialContributionBreakdown {
 }
 
 export interface CompanyTaxSummary {
+  calculationMode: TaxOnboardingValues["companyEstimatedTaxableProfitMode"];
   revenue: number;
   deductibleExpenses: number;
   accountingResult: number;

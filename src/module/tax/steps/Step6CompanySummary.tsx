@@ -39,9 +39,21 @@ export function Step6CompanySummary(props: {
         </h3>
         <div className="space-y-2 rounded-lg border border-border bg-card p-4">
           <div className="space-y-2 text-sm">
-            <Row label="Revenue" value={eur(s.revenue)} />
-            <Row label="Deductible expenses" value={eur(-s.deductibleExpenses)} />
-            <Row label="Accounting result (revenue - deductible expenses)" value={eur(s.accountingResult)} />
+            {s.calculationMode === 'detailed' ? (
+              <>
+                <Row label="Revenue" value={eur(s.revenue)} />
+                <Row label="Deductible expenses" value={eur(-s.deductibleExpenses)} />
+                <Row
+                  label="Accounting result (revenue - deductible expenses)"
+                  value={eur(s.accountingResult)}
+                />
+              </>
+            ) : (
+              <Row
+                label="Accounting result (manual amount)"
+                value={eur(s.accountingResult)}
+              />
+            )}
             <Row label="DNA add-back (non-deductible expenses)" value={eur(s.dnaAddBack)} />
             <Row
               label="Tax result before losses (accounting result + DNA)"

@@ -114,14 +114,15 @@ function computeLegalAnnualBeforeFees(params: {
     case 'complementary':
       return legalSecondarySelfEmployed(income)
     case 'article37': {
-      // Article 37 annual logic:
-      // - income < lower threshold: no contribution
-      // - lower..upper: (income - lower) × 5.125%
+      // Article 37 annual logic (2026 table):
+      // - income <= lower threshold: Article 37 minimum base applies
+      // - lower..upper: full income × 20.5%
       // - >= upper: switch to main self-employed regime
-      const { article37Rate } = IPP_2026.socialContributions.rates
-      if (income < article37LowerThreshold) return 0
+      const article37Minimum = IPP_2026.socialContributions.minimumBaseAnnual.article37
+      const { rateMain } = IPP_2026.socialContributions.rates
+      if (income <= article37LowerThreshold) return article37Minimum
       if (income < article37UpperThreshold) {
-        return roundToCents((income - article37LowerThreshold) * article37Rate)
+        return roundToCents(income * rateMain)
       }
       return legalMainSelfEmployed(income)
     }

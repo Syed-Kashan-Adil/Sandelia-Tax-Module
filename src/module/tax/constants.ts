@@ -73,8 +73,8 @@ export const IPP_2026 = {
       b1: 17374.08,
       b2: 75024.54,
       b3: 110562.42,
-      article37LowerThreshold: 8687.03,
-      article37UpperThreshold: 17374.08,
+      article37LowerThreshold: 1922.16,
+      article37UpperThreshold: 9101.26,
       assistingSpouseMaxiUpToIncome: 7632.44,
       studentZone1Max: 8687.03,
       studentZone2Max: 17374.08,
@@ -99,7 +99,7 @@ export const IPP_2026 = {
     },
     publishedMainMinimumAnnualPartena: 3711.28,
     /** Partena published minimum for active pensioners (quarterly amount, income year 2026). */
-    publishedPensionerMinimumQuarterlyPartena: 191.47,
+    publishedPensionerMinimumQuarterlyPartena: 348.52,
     fundFeeRates: {
       partena: 0.042,
       xerius: 0.0305,

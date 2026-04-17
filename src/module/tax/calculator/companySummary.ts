@@ -125,6 +125,7 @@ export function calculateCompanyTaxSummary(values: TaxOnboardingValues): Company
   const social = computeDirectorSocial(values)
 
   return {
+    calculationMode: values.companyEstimatedTaxableProfitMode,
     revenue,
     deductibleExpenses: expenses,
     accountingResult,
