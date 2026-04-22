@@ -9,7 +9,10 @@ import { computeFederalTax } from "./federalTax";
 import { applyMaritalQuotient } from "./maritalQuotient";
 import { clampNonNegative, roundToCents } from "./money";
 import { computeEstimatedAnnualProfessionalIncome } from "./profitEstimation";
-import { computeSocialContributions } from "./socialContributions";
+import {
+  computeCompanyPaidDirectorContributions,
+  computeSocialContributions,
+} from "./socialContributions";
 
 function buildMaritalSplittingNote(params: {
   hasPartner: boolean;
@@ -102,13 +105,20 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const directorOverrideAnnual = values.isSocialContributionsExempt
     ? 0
     : values.socialContributionsOverride;
-  const primaryDirectorSocialBreakdown = computeSocialContributions({
-    status: "company-director",
-    annualNetIncome: primaryDirectorRemuneration,
-    overrideAnnualAmount: directorOverrideAnnual,
-    socialInsuranceFund: values.socialInsuranceFund,
-    studentSocialExemption: false,
-  });
+  const primaryDirectorSocialBreakdown =
+    values.companyDirectorSocialContributionsPaidByCompany
+      ? computeCompanyPaidDirectorContributions({
+          annualRemuneration: primaryDirectorRemuneration,
+          overrideAnnualAmount: directorOverrideAnnual,
+          socialInsuranceFund: values.socialInsuranceFund,
+        })
+      : computeSocialContributions({
+          status: "company-director",
+          annualNetIncome: primaryDirectorRemuneration,
+          overrideAnnualAmount: directorOverrideAnnual,
+          socialInsuranceFund: values.socialInsuranceFund,
+          studentSocialExemption: false,
+        });
   const primaryDirectorSocial = roundToCents(
     primaryDirectorSocialBreakdown.annualAmount,
   );
@@ -238,13 +248,23 @@ export function calculateTaxSummary(values: TaxOnboardingValues): TaxSummary {
   const partnerCompanyDirectorRemuneration = roundToCents(
     clampNonNegative(values.partnerCompanyDirectorRemuneration),
   );
-  const partnerCompanyDirectorSocialBreakdown = computeSocialContributions({
-    status: "company-director",
-    annualNetIncome: partnerCompanyDirectorRemuneration,
-    overrideAnnualAmount: null,
-    socialInsuranceFund: values.socialInsuranceFund,
-    studentSocialExemption: false,
-  });
+  const partnerCompanyDirectorSocialBreakdown =
+    values.partnerCompanyDirectorSocialContributionsPaidByCompany
+      ? computeCompanyPaidDirectorContributions({
+          annualRemuneration: partnerCompanyDirectorRemuneration,
+          overrideAnnualAmount:
+            values.partnerCompanyDirectorUseSocialContributionsOverride
+              ? values.partnerCompanyDirectorSocialContributionsOverrideAnnual
+              : null,
+          socialInsuranceFund: values.socialInsuranceFund,
+        })
+      : computeSocialContributions({
+          status: "company-director",
+          annualNetIncome: partnerCompanyDirectorRemuneration,
+          overrideAnnualAmount: null,
+          socialInsuranceFund: values.socialInsuranceFund,
+          studentSocialExemption: false,
+        });
   const partnerCompanyDirectorSocialContributions = roundToCents(
     partnerCompanyDirectorSocialBreakdown.annualAmount,
   );

@@ -4,7 +4,10 @@ import type {
   TaxOnboardingValues,
 } from '../types'
 import { clampNonNegative, roundToCents } from './money'
-import { computeSocialContributions } from './socialContributions'
+import {
+  computeCompanyPaidDirectorContributions,
+  computeSocialContributions,
+} from './socialContributions'
 
 const REDUCED_RATE_LIMIT = 100000
 const REDUCED_RATE = 0.2
@@ -40,13 +43,19 @@ function computeDirectorSocial(values: TaxOnboardingValues): {
     const annualIncomeBase = roundToCents(
       clampNonNegative(director.monthlySalary) * 12 + clampNonNegative(director.expectedDividend)
     )
-    const social = computeSocialContributions({
-      status: 'main',
-      annualNetIncome: annualIncomeBase,
-      overrideAnnualAmount: director.socialContributionOverrideAnnual,
-      socialInsuranceFund: values.socialInsuranceFund,
-      studentSocialExemption: false,
-    })
+    const social = director.socialContributionsPaidByCompany
+      ? computeCompanyPaidDirectorContributions({
+          annualRemuneration: annualIncomeBase,
+          overrideAnnualAmount: director.socialContributionOverrideAnnual,
+          socialInsuranceFund: values.socialInsuranceFund,
+        })
+      : computeSocialContributions({
+          status: 'main',
+          annualNetIncome: annualIncomeBase,
+          overrideAnnualAmount: director.socialContributionOverrideAnnual,
+          socialInsuranceFund: values.socialInsuranceFund,
+          studentSocialExemption: false,
+        })
     return {
       directorId: director.id,
       directorName: director.name.trim() || 'Director',

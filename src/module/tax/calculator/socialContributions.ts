@@ -202,3 +202,49 @@ export function computeSocialContributions(params: {
     method: 'calculated',
   }
 }
+
+/**
+ * Company-paid social contributions for directors are treated as ATN (benefit in kind).
+ * This creates a circular base: contribution = rate × (remuneration + contribution).
+ * Solve directly with: contribution = remuneration × rate / (1 - rate).
+ */
+export function computeCompanyPaidDirectorContributions(params: {
+  annualRemuneration: number
+  overrideAnnualAmount: number | null
+  socialInsuranceFund: TaxOnboardingValues['socialInsuranceFund']
+}): SocialContributionsBreakdown {
+  const baseIncome = roundToCents(clampNonNegative(params.annualRemuneration))
+
+  if (
+    typeof params.overrideAnnualAmount === 'number' &&
+    Number.isFinite(params.overrideAnnualAmount)
+  ) {
+    const annualAmount = roundToCents(clampNonNegative(params.overrideAnnualAmount))
+    return {
+      status: 'company-director',
+      baseIncome,
+      legalAnnualBeforeFees: annualAmount,
+      fundFeeRate: 0,
+      annualAmount,
+      quarterlyAmount: roundToCents(annualAmount / 4),
+      method: 'override',
+    }
+  }
+
+  const contributionRate = IPP_2026.socialContributions.rates.rateMain
+  const feeRate = socialFundFeeRate(params.socialInsuranceFund)
+  const effectiveRate = contributionRate * (1 + feeRate)
+  const safeDenominator = Math.max(1 - effectiveRate, Number.EPSILON)
+  const annualAmount = roundToCents((baseIncome * effectiveRate) / safeDenominator)
+  const legalAnnualBeforeFees = roundToCents(annualAmount / (1 + feeRate))
+
+  return {
+    status: 'company-director',
+    baseIncome,
+    legalAnnualBeforeFees,
+    fundFeeRate: feeRate,
+    annualAmount,
+    quarterlyAmount: roundToCents(annualAmount / 4),
+    method: 'calculated',
+  }
+}
