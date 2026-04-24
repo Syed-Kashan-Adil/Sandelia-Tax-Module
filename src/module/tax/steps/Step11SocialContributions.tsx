@@ -2,7 +2,10 @@ import { useMemo } from "react";
 
 import { cn } from "../../../lib/utils";
 import { computeEstimatedAnnualProfessionalIncome } from "../calculator/profitEstimation";
-import { computeSocialContributions } from "../calculator/socialContributions";
+import {
+  computeCompanyPaidDirectorContributions,
+  computeSocialContributions,
+} from "../calculator/socialContributions";
 import { useTaxOnboardingStore } from "../store";
 import { Field } from "../ui/Field";
 import { Input } from "../ui/Input";
@@ -26,6 +29,9 @@ export function Step11SocialContributions() {
     () => computeEstimatedAnnualProfessionalIncome(values),
     [values],
   );
+  const isCompanyPaidDirectorFlow =
+    status === "company-director" &&
+    values.companyDirectorSocialContributionsPaidByCompany;
 
   const netIncome = useMemo(
     () =>
@@ -41,17 +47,28 @@ export function Step11SocialContributions() {
     return values.socialContributionsOverride;
   }, [isExempt, values.socialContributionsOverride]);
 
-  const calculated = useMemo(
-    () =>
-      computeSocialContributions({
-        status,
-        annualNetIncome: netIncome,
+  const calculated = useMemo(() => {
+    if (isCompanyPaidDirectorFlow) {
+      return computeCompanyPaidDirectorContributions({
+        annualRemuneration: netIncome,
         overrideAnnualAmount,
         socialInsuranceFund: fund,
-        studentSocialExemption: false,
-      }),
-    [status, netIncome, overrideAnnualAmount, fund],
-  );
+      });
+    }
+    return computeSocialContributions({
+      status,
+      annualNetIncome: netIncome,
+      overrideAnnualAmount,
+      socialInsuranceFund: fund,
+      studentSocialExemption: false,
+    });
+  }, [
+    status,
+    netIncome,
+    overrideAnnualAmount,
+    fund,
+    isCompanyPaidDirectorFlow,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -69,14 +86,18 @@ export function Step11SocialContributions() {
               label="Yes"
               checked={values.companyDirectorSocialContributionsPaidByCompany}
               onChange={() =>
-                setValues({ companyDirectorSocialContributionsPaidByCompany: true })
+                setValues({
+                  companyDirectorSocialContributionsPaidByCompany: true,
+                })
               }
             />
             <ToggleOption
               label="No"
               checked={!values.companyDirectorSocialContributionsPaidByCompany}
               onChange={() =>
-                setValues({ companyDirectorSocialContributionsPaidByCompany: false })
+                setValues({
+                  companyDirectorSocialContributionsPaidByCompany: false,
+                })
               }
             />
           </div>
