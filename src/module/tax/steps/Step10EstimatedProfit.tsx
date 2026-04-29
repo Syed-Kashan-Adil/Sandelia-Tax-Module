@@ -60,7 +60,7 @@ export function Step10EstimatedProfit() {
       <div className="space-y-6">
         <Field
           label="Company director remuneration (annual)"
-          hint="Gross director remuneration used for IPP company-director treatment."
+          hint="Total taxable professional remuneration used for IPP company-director treatment (include benefits when applicable)."
         >
           <Input
             type="number"
