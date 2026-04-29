@@ -21,7 +21,7 @@ export const IPP_2026 = {
   maritalQuotient: {
     transferRate: 0.3,
     cap: 13800,
-    eligibleStatuses: ['married', 'legally-cohabiting'] as const,
+    eligibleStatuses: ["married", "legally-cohabiting"] as const,
   },
   /** Progressive federal tax on taxable income (same schedule used for allowance tax reduction in this simulator). */
   federalBrackets: [
@@ -85,8 +85,9 @@ export const IPP_2026 = {
       rateMain: 0.205,
       rateHighBand: 0.1416,
       article37Rate: 0.05125,
-      pensionerLow: 0.03675,
-      pensionerHigh: 0.0354,
+      // Annualized rates for active pensioners (table amounts are quarterly; annual = quarterly × 4).
+      pensionerLow: 0.147,
+      pensionerHigh: 0.1416,
       assistingSpouseMiniLow: 0.0079,
       assistingSpouseMiniHigh: 0.0051,
     },
@@ -109,7 +110,7 @@ export const IPP_2026 = {
       other: 0.042,
     } as const,
   },
-} as const
+} as const;
 
 // /**
 //  * IPP parameters for **income year 2026** (assessment year 2027), per product / Kevin spec.
