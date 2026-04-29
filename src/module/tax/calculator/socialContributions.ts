@@ -182,8 +182,7 @@ export function computeSocialContributions(params: {
     annualNetIncome: baseIncome,
   });
 
-  const { b1, pensionerNoContributionThreshold } =
-    IPP_2026.socialContributions.boundaries;
+  const { b1 } = IPP_2026.socialContributions.boundaries;
   let annualAmount = roundToCents(legalAnnualBeforeFees * (1 + feeRate));
   let quarterlyAmount = roundToCents(annualAmount / 4);
 
@@ -197,19 +196,6 @@ export function computeSocialContributions(params: {
       IPP_2026.socialContributions.publishedMainMinimumAnnualPartena;
     quarterlyAmount = roundToCents(annualAmount / 4);
   }
-  // Active pensioner minimum plateau (Partena) is published as a quarterly amount.
-  // Keep that amount as quarterly and annualize by ×4.
-  if (
-    params.status === "active-pensioner" &&
-    baseIncome >= pensionerNoContributionThreshold &&
-    baseIncome <= b1 &&
-    params.socialInsuranceFund === "partena"
-  ) {
-    quarterlyAmount =
-      IPP_2026.socialContributions.publishedPensionerMinimumQuarterlyPartena;
-    annualAmount = roundToCents(quarterlyAmount * 4);
-  }
-
   return {
     status: params.status,
     baseIncome,
