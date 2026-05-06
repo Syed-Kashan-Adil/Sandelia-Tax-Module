@@ -91,72 +91,77 @@ export function TaxWizard() {
     () =>
       isCompany && step === totalSteps
         ? (() => {
-            const primary =
-              values.companyDirectors.find((d) => d.id === values.companyPrimaryDirectorId) ??
-              values.companyDirectors[0]
-            const mrRemuneration =
-              (primary ? primary.monthlySalary * 12 : 0) + (primary ? primary.expectedDividend : 0)
-            const socialAnnualFromInputs = values.companyIsSocialContributionsExempt
-              ? 0
-              : Math.max(
-                  0,
-                  values.companySocialPaidAmount > 0
-                    ? values.companySocialPaidAmount
-                    : (primary?.socialContributionOverrideAnnual ??
-                        computeSocialContributions({
-                          status: 'main',
-                          annualNetIncome: mrRemuneration,
-                          overrideAnnualAmount: null,
-                          socialInsuranceFund: values.socialInsuranceFund,
-                          studentSocialExemption: false,
-                        }).annualAmount)
-                )
-            const mrWithholding = primary ? primary.withholdingTaxAnnual : 0
-            const partnerGross = Math.max(
+          const primary =
+            values.companyDirectors.find((d) => d.id === values.companyPrimaryDirectorId) ??
+            values.companyDirectors[0]
+          const mrRemuneration =
+            (primary ? primary.monthlySalary * 12 : 0) + (primary ? primary.expectedDividend : 0)
+          const socialAnnualFromInputs = values.companyIsSocialContributionsExempt
+            ? 0
+            : Math.max(
               0,
-              values.partnerIncome > 0 ? values.partnerIncome : values.companyPartnerGrossSalary
+              values.companySocialPaidAmount > 0
+                ? values.companySocialPaidAmount
+                : (primary?.socialContributionOverrideAnnual ??
+                  computeSocialContributions({
+                    status: 'main',
+                    annualNetIncome: mrRemuneration,
+                    overrideAnnualAmount: null,
+                    socialInsuranceFund: values.socialInsuranceFund,
+                    studentSocialExemption: false,
+                  }).annualAmount)
             )
-            const partnerWithholding = Math.max(
-              0,
-              Math.max(values.partnerWithholdingTax, values.companyPartnerWithholdingTax)
-            )
-            const socialAnnual = socialAnnualFromInputs
+          const mrWithholding = primary ? primary.withholdingTaxAnnual : 0
+          const partnerGross = Math.max(
+            0,
+            values.partnerIncome > 0 ? values.partnerIncome : values.companyPartnerGrossSalary
+          )
+          const partnerWithholding = Math.max(
+            0,
+            Math.max(values.partnerWithholdingTax, values.companyPartnerWithholdingTax)
+          )
 
-            return calculateTaxSummary({
-              ...values,
-              taxSubject: 'self-employed',
-              selfEmployedStatus: 'company-director',
-              profitEstimationMode: 'manual',
-              companyDirectorRemuneration: mrRemuneration,
-              companyDirectorSocialContributionsAnnual: socialAnnual,
-              companyDirectorSocialContributionsPaidByCompany:
-                values.companySocialPaidBy === 'company',
-              estimatedSelfEmployedProfit: 0,
-              estimatedProfessionalExpenses: 0,
-              isSocialContributionsExempt: values.companyIsSocialContributionsExempt,
-              currentQuarterlySocialContribution:
-                values.companyCurrentQuarterlySocialContribution > 0
-                  ? values.companyCurrentQuarterlySocialContribution
-                  : values.companySocialPaidAmount > 0
-                    ? values.companySocialPaidAmount / 4
-                    : 0,
-              socialContributionsOverride: null,
-              partnerIncome: partnerGross,
-              partnerIncomeType: 'employee',
-              partnerSalariedIncome: partnerGross,
-              partnerWithholdingTaxMode: 'known',
-              partnerWithholdingTax: partnerWithholding,
-              withholdingTaxMode: 'known',
-              withholdingTax: mrWithholding,
-              hasSalariedIncome: values.hasSalariedIncome,
-              salariedIncome: values.salariedIncome,
-              applyEmployeeProfessionalExpensesLumpSum:
-                values.hasSalariedIncome && values.applyEmployeeProfessionalExpensesLumpSum,
-              employeeProfessionalExpensesLumpSumOverride: values.hasSalariedIncome
-                ? values.employeeProfessionalExpensesLumpSumOverride
-                : null,
-            })
-          })()
+          console.log(primary.socialContributionsPaidByCompany, values.companySocialPaidByy);
+          const socialAnnual = socialAnnualFromInputs
+          const primarySocialPaidByCompany =
+            primary?.socialContributionsPaidByCompany ??
+            values.companySocialPaidBy === 'company'
+
+          return calculateTaxSummary({
+            ...values,
+            taxSubject: 'self-employed',
+            selfEmployedStatus: 'company-director',
+            profitEstimationMode: 'manual',
+            companyDirectorRemuneration: mrRemuneration,
+            companyDirectorSocialContributionsAnnual: socialAnnual,
+            companyDirectorSocialContributionsPaidByCompany:
+              primarySocialPaidByCompany,
+            estimatedSelfEmployedProfit: 0,
+            estimatedProfessionalExpenses: 0,
+            isSocialContributionsExempt: values.companyIsSocialContributionsExempt,
+            currentQuarterlySocialContribution:
+              values.companyCurrentQuarterlySocialContribution > 0
+                ? values.companyCurrentQuarterlySocialContribution
+                : values.companySocialPaidAmount > 0
+                  ? values.companySocialPaidAmount / 4
+                  : 0,
+            socialContributionsOverride: null,
+            partnerIncome: partnerGross,
+            partnerIncomeType: 'employee',
+            partnerSalariedIncome: partnerGross,
+            partnerWithholdingTaxMode: 'known',
+            partnerWithholdingTax: partnerWithholding,
+            withholdingTaxMode: 'known',
+            withholdingTax: mrWithholding,
+            hasSalariedIncome: values.hasSalariedIncome,
+            salariedIncome: values.salariedIncome,
+            applyEmployeeProfessionalExpensesLumpSum:
+              values.hasSalariedIncome && values.applyEmployeeProfessionalExpensesLumpSum,
+            employeeProfessionalExpensesLumpSumOverride: values.hasSalariedIncome
+              ? values.employeeProfessionalExpensesLumpSumOverride
+              : null,
+          })
+        })()
         : null,
     [isCompany, step, totalSteps, values]
   )
@@ -241,67 +246,67 @@ export function TaxWizard() {
                 directorFlatRateDetails={
                   companyPersonalSummary
                     ? {
-                        grossProfessionalIncome: roundTo2(
-                          (values.companyDirectors.find(
-                            (d) => d.id === values.companyPrimaryDirectorId
-                          )?.monthlySalary ??
-                            values.companyDirectors[0]?.monthlySalary ??
-                            0) *
-                            12 +
-                            (values.companyDirectors.find(
-                              (d) => d.id === values.companyPrimaryDirectorId
-                            )?.expectedDividend ??
-                              values.companyDirectors[0]?.expectedDividend ??
-                              0)
-                        ),
-                        socialContributionsDeducted: roundTo2(
-                          values.companyIsSocialContributionsExempt
-                            ? 0
-                            : Math.max(
-                                0,
-                                values.companySocialPaidAmount > 0
-                                  ? values.companySocialPaidAmount
-                                  : (values.companyDirectors.find(
+                      grossProfessionalIncome: roundTo2(
+                        (values.companyDirectors.find(
+                          (d) => d.id === values.companyPrimaryDirectorId
+                        )?.monthlySalary ??
+                          values.companyDirectors[0]?.monthlySalary ??
+                          0) *
+                        12 +
+                        (values.companyDirectors.find(
+                          (d) => d.id === values.companyPrimaryDirectorId
+                        )?.expectedDividend ??
+                          values.companyDirectors[0]?.expectedDividend ??
+                          0)
+                      ),
+                      socialContributionsDeducted: roundTo2(
+                        values.companyIsSocialContributionsExempt
+                          ? 0
+                          : Math.max(
+                            0,
+                            values.companySocialPaidAmount > 0
+                              ? values.companySocialPaidAmount
+                              : (values.companyDirectors.find(
+                                (d) => d.id === values.companyPrimaryDirectorId
+                              )?.socialContributionOverrideAnnual ??
+                                computeSocialContributions({
+                                  status: 'main',
+                                  annualNetIncome:
+                                    (values.companyDirectors.find(
                                       (d) => d.id === values.companyPrimaryDirectorId
-                                    )?.socialContributionOverrideAnnual ??
-                                      computeSocialContributions({
-                                        status: 'main',
-                                        annualNetIncome:
-                                          (values.companyDirectors.find(
-                                            (d) => d.id === values.companyPrimaryDirectorId
-                                          )?.monthlySalary ??
-                                            values.companyDirectors[0]?.monthlySalary ??
-                                            0) *
-                                            12 +
-                                          (values.companyDirectors.find(
-                                            (d) => d.id === values.companyPrimaryDirectorId
-                                          )?.expectedDividend ??
-                                            values.companyDirectors[0]?.expectedDividend ??
-                                            0),
-                                        overrideAnnualAmount: null,
-                                        socialInsuranceFund: values.socialInsuranceFund,
-                                        studentSocialExemption: false,
-                                      }).annualAmount)
-                              )
-                        ),
-                        rate: 0.03,
-                        cap: IPP_2026.professionalExpenses.companyDirectorLumpSumMax,
-                        flatRateApplied: roundTo2(
-                          Math.min(
-                            Math.max(
-                              0,
-                              companyPersonalSummary.companyDirectorTaxableGross -
-                                companyPersonalSummary.socialContributions.annualAmount
-                            ) * 0.03,
-                            IPP_2026.professionalExpenses.companyDirectorLumpSumMax,
-                            Math.max(
-                              0,
-                              companyPersonalSummary.companyDirectorTaxableGross -
-                                companyPersonalSummary.socialContributions.annualAmount
-                            )
+                                    )?.monthlySalary ??
+                                      values.companyDirectors[0]?.monthlySalary ??
+                                      0) *
+                                    12 +
+                                    (values.companyDirectors.find(
+                                      (d) => d.id === values.companyPrimaryDirectorId
+                                    )?.expectedDividend ??
+                                      values.companyDirectors[0]?.expectedDividend ??
+                                      0),
+                                  overrideAnnualAmount: null,
+                                  socialInsuranceFund: values.socialInsuranceFund,
+                                  studentSocialExemption: false,
+                                }).annualAmount)
                           )
-                        ),
-                      }
+                      ),
+                      rate: 0.03,
+                      cap: IPP_2026.professionalExpenses.companyDirectorLumpSumMax,
+                      flatRateApplied: roundTo2(
+                        Math.min(
+                          Math.max(
+                            0,
+                            companyPersonalSummary.companyDirectorTaxableGross -
+                            companyPersonalSummary.socialContributions.annualAmount
+                          ) * 0.03,
+                          IPP_2026.professionalExpenses.companyDirectorLumpSumMax,
+                          Math.max(
+                            0,
+                            companyPersonalSummary.companyDirectorTaxableGross -
+                            companyPersonalSummary.socialContributions.annualAmount
+                          )
+                        )
+                      ),
+                    }
                     : null
                 }
               />
